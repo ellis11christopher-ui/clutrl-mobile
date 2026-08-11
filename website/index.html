@@ -1,0 +1,657 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>CLUTRL — The world is your gameboard.</title>
+<meta name="description" content="CLUTRL turns real places into camera-first scavenger hunts. Follow the clues. Find the experience." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1024 1024'%3E%3Crect width='1024' height='1024' rx='204.8' fill='%23151612'/%3E%3Cpath d='M368.64,194.56 H194.56 V368.64' fill='none' stroke='%23C8FF00' stroke-width='46.08'/%3E%3Cpath d='M655.36,194.56 H829.44 V368.64' fill='none' stroke='%23C8FF00' stroke-width='46.08'/%3E%3Cpath d='M194.56,655.36 V829.44 H368.64' fill='none' stroke='%23C8FF00' stroke-width='46.08'/%3E%3Cpath d='M829.44,655.36 V829.44 H655.36' fill='none' stroke='%23C8FF00' stroke-width='46.08'/%3E%3Cpath d='M506.88,276.48 H604.16 L445.44,747.52 H348.16 Z' fill='%23C8FF00'/%3E%3C/svg%3E" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  /* ---------- Tokens ---------- */
+  :root {
+    --ink: #151612;
+    --paper: #F4F0E7;
+    --lime: #C8FF00;
+    --lime-deep: #A3D400;
+    --coral: #FF6048;
+    --cyan: #00D7FF;
+    --white: #FFFFFF;
+
+    --ink-70: rgba(21,22,18,.7);
+    --ink-55: rgba(21,22,18,.55);
+    --ink-30: rgba(21,22,18,.3);
+    --ink-15: rgba(21,22,18,.15);
+    --ink-08: rgba(21,22,18,.08);
+
+    --paper-80: rgba(244,240,231,.8);
+    --paper-60: rgba(244,240,231,.6);
+    --paper-35: rgba(244,240,231,.35);
+    --paper-15: rgba(244,240,231,.15);
+    --paper-08: rgba(244,240,231,.08);
+
+    --font-display: 'Manrope', system-ui, sans-serif;
+    --font-body: 'Inter', system-ui, sans-serif;
+
+    --r-sm: 12px;
+    --r-md: 18px;
+    --r-lg: 26px;
+    --r-xl: 34px;
+    --r-pill: 999px;
+
+    --container: 1180px;
+    --ease: cubic-bezier(.16,1,.3,1);
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--font-body);
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+  img, svg { display: block; max-width: 100%; }
+  a { color: inherit; }
+  :focus-visible { outline: 3px solid var(--cyan); outline-offset: 3px; }
+
+  h1, h2, h3 { font-family: var(--font-display); margin: 0; text-wrap: balance; }
+  p { margin: 0; }
+
+  .wrap { max-width: var(--container); margin: 0 auto; padding: 0 24px; }
+  .tabular { font-variant-numeric: tabular-nums; }
+
+  .eyebrow {
+    font-family: var(--font-body);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+  }
+
+  /* ---------- Scan-corner motif (shared component) ---------- */
+  .scan-frame { position: relative; }
+  .corners { position: absolute; inset: 0; pointer-events: none; }
+  .corner {
+    position: absolute;
+    width: var(--c-size, 34px);
+    height: var(--c-size, 34px);
+    border-color: var(--c-color, var(--lime));
+    border-style: solid;
+    border-width: 0;
+  }
+  .corner.tl { top: var(--c-inset,0); left: var(--c-inset,0); border-top-width: var(--c-w,3px); border-left-width: var(--c-w,3px); border-top-left-radius: 6px; }
+  .corner.tr { top: var(--c-inset,0); right: var(--c-inset,0); border-top-width: var(--c-w,3px); border-right-width: var(--c-w,3px); border-top-right-radius: 6px; }
+  .corner.bl { bottom: var(--c-inset,0); left: var(--c-inset,0); border-bottom-width: var(--c-w,3px); border-left-width: var(--c-w,3px); border-bottom-left-radius: 6px; }
+  .corner.br { bottom: var(--c-inset,0); right: var(--c-inset,0); border-bottom-width: var(--c-w,3px); border-right-width: var(--c-w,3px); border-bottom-right-radius: 6px; }
+
+  /* ---------- Buttons ---------- */
+  .btn {
+    appearance: none;
+    border: none;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    font-family: var(--font-body);
+    font-weight: 700;
+    font-size: 15px;
+    letter-spacing: .01em;
+    padding: 15px 26px;
+    border-radius: var(--r-md);
+    transition: transform .25s var(--ease), box-shadow .25s var(--ease), background .25s var(--ease);
+  }
+  .btn:active { transform: scale(.97); }
+  .btn-lime { background: var(--lime); color: var(--ink); }
+  .btn-lime:hover { box-shadow: 0 0 0 3px var(--paper), 0 0 0 6px var(--lime); }
+  .btn-outline { background: transparent; color: var(--paper); border: 1.5px solid var(--paper-35); }
+  .btn-outline:hover { border-color: var(--lime); color: var(--lime); }
+  .btn-ghost-dark { background: transparent; color: var(--ink); border: 1.5px solid var(--ink-15); }
+  .btn-ghost-dark:hover { border-color: var(--ink); }
+
+  /* ---------- Nav ---------- */
+  .nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 50;
+    padding: 18px 0;
+    background: linear-gradient(to bottom, rgba(21,22,18,.85), rgba(21,22,18,0));
+    pointer-events: none;
+  }
+  .nav .wrap { display: flex; align-items: center; justify-content: space-between; pointer-events: auto; }
+  .nav-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+  .nav-logo svg { width: 30px; height: 30px; }
+  .nav-logo span { font-family: var(--font-display); font-weight: 800; font-size: 17px; letter-spacing: .04em; color: var(--white); }
+  .nav-links { display: flex; align-items: center; gap: 28px; }
+  .nav-links a { font-size: 14px; font-weight: 600; color: var(--paper-80); text-decoration: none; }
+  .nav-links a:hover { color: var(--lime); }
+  .nav-cta { font-size: 13px !important; padding: 11px 18px !important; }
+  @media (max-width: 720px) {
+    .nav-links a:not(.btn) { display: none; }
+  }
+
+  /* ---------- Hero ---------- */
+  .hero {
+    position: relative;
+    min-height: 100svh;
+    background: var(--ink);
+    color: var(--paper);
+    display: flex;
+    align-items: center;
+    padding: 120px 0 80px;
+    overflow: hidden;
+  }
+  .hero-glow {
+    position: absolute;
+    width: 900px; height: 900px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(200,255,0,.16), transparent 65%);
+    top: -320px; right: -280px;
+    pointer-events: none;
+  }
+  .hero-grid {
+    position: absolute; inset: 0;
+    background-image:
+      linear-gradient(var(--paper-08) 1px, transparent 1px),
+      linear-gradient(90deg, var(--paper-08) 1px, transparent 1px);
+    background-size: 64px 64px;
+    mask-image: radial-gradient(ellipse 70% 60% at 50% 40%, black, transparent);
+    pointer-events: none;
+  }
+  .hero .wrap {
+    position: relative;
+    display: grid;
+    grid-template-columns: 1.15fr 0.85fr;
+    gap: 40px;
+    align-items: center;
+  }
+  .hero-copy { max-width: 620px; }
+  .hero-eyebrow { color: var(--lime); display: flex; align-items: center; gap: 10px; margin-bottom: 22px; }
+  .hero-eyebrow::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--lime); box-shadow: 0 0 12px 2px var(--lime); }
+  .hero h1 {
+    font-size: clamp(40px, 6.4vw, 76px);
+    line-height: 0.98;
+    letter-spacing: -0.03em;
+    font-weight: 800;
+  }
+  .hero h1 em { font-style: normal; color: var(--lime); }
+  .hero-sub {
+    margin-top: 24px;
+    font-size: 17px;
+    line-height: 1.6;
+    color: var(--paper-80);
+    max-width: 46ch;
+  }
+  .hero-actions { margin-top: 36px; display: flex; gap: 14px; flex-wrap: wrap; }
+  .hero-meta { margin-top: 46px; display: flex; gap: 32px; flex-wrap: wrap; }
+  .hero-meta div { display: flex; flex-direction: column; gap: 4px; }
+  .hero-meta strong { font-family: var(--font-display); font-size: 22px; font-weight: 800; }
+  .hero-meta span { font-size: 12px; color: var(--paper-60); text-transform: uppercase; letter-spacing: .08em; }
+
+  /* Hero focus-lock sequence */
+  .hero-scan { position: relative; width: 100%; }
+  .hero-scan .corners { --c-size: 46px; --c-w: 4px; --c-inset: -14px; }
+  .hero-wordmark-wrap { filter: blur(20px); opacity: 0; animation: resolve .9s var(--ease) .95s forwards; }
+  .hero .corner { opacity: 0; }
+  .hero .corner.tl { animation: cTL .95s var(--ease) .1s forwards; }
+  .hero .corner.tr { animation: cTR .95s var(--ease) .22s forwards; }
+  .hero .corner.bl { animation: cBL .95s var(--ease) .18s forwards; }
+  .hero .corner.br { animation: cBR .95s var(--ease) .3s forwards; }
+  .scanline {
+    position: absolute; left: -4%; right: -4%; height: 2px; top: -8%;
+    background: linear-gradient(90deg, transparent, var(--lime) 20%, var(--lime) 80%, transparent);
+    box-shadow: 0 0 24px 3px rgba(200,255,0,.7);
+    opacity: 0;
+    animation: sweep 1.3s cubic-bezier(.6,0,.35,1) .35s 1 forwards;
+  }
+  @keyframes resolve { to { filter: blur(0); opacity: 1; } }
+  @keyframes sweep { 0% { top: -6%; opacity: 0; } 8% { opacity: 1; } 88% { opacity: 1; } 100% { top: 104%; opacity: 0; } }
+  @keyframes cTL { from { opacity: 0; transform: translate(-70px,-70px) scale(1.5); } to { opacity: 1; transform: translate(0,0) scale(1); } }
+  @keyframes cTR { from { opacity: 0; transform: translate(70px,-70px) scale(1.5); } to { opacity: 1; transform: translate(0,0) scale(1); } }
+  @keyframes cBL { from { opacity: 0; transform: translate(-70px,70px) scale(1.5); } to { opacity: 1; transform: translate(0,0) scale(1); } }
+  @keyframes cBR { from { opacity: 0; transform: translate(70px,70px) scale(1.5); } to { opacity: 1; transform: translate(0,0) scale(1); } }
+
+  /* Phone mockup */
+  .phone {
+    width: min(280px, 82vw);
+    margin-inline: auto;
+    border-radius: 40px;
+    background: #0d0e0b;
+    border: 2px solid rgba(244,240,231,.14);
+    padding: 12px;
+    box-shadow: 0 40px 80px -20px rgba(0,0,0,.6);
+  }
+  .phone-screen {
+    background: var(--paper);
+    border-radius: 28px;
+    overflow: hidden;
+    color: var(--ink);
+    padding: 18px 16px 20px;
+  }
+  .phone-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+  .phone-tag { font-size: 9px; font-weight: 800; letter-spacing: .1em; color: var(--ink-55); }
+  .phone-pill { font-size: 9px; font-weight: 800; background: var(--cyan); color: var(--ink); padding: 4px 8px; border-radius: var(--r-pill); }
+  .phone-track { height: 6px; background: var(--ink-08); border-radius: var(--r-pill); overflow: hidden; margin-bottom: 16px; }
+  .phone-track i { display: block; height: 100%; width: 62%; background: var(--ink); border-radius: var(--r-pill); }
+  .phone-media {
+    height: 120px; border-radius: var(--r-md); margin-bottom: 14px;
+    background: linear-gradient(135deg, var(--cyan), #6fb8c8 60%, var(--ink) 130%);
+    position: relative; overflow: hidden;
+  }
+  .phone-media span {
+    position: absolute; left: 12px; bottom: 10px; font-size: 9px; font-weight: 800;
+    letter-spacing: .08em; color: var(--white); background: rgba(21,22,18,.55);
+    padding: 5px 9px; border-radius: var(--r-pill);
+  }
+  .phone-card { background: var(--white); border: 1px solid var(--ink-08); border-radius: var(--r-md); padding: 13px; margin-bottom: 14px; }
+  .phone-card p { font-size: 12.5px; line-height: 1.5; font-weight: 600; }
+  .phone-btn { background: var(--ink); color: var(--white); text-align: center; font-size: 12px; font-weight: 800; letter-spacing: .03em; padding: 13px; border-radius: var(--r-md); }
+
+  /* ---------- Section shell ---------- */
+  section { position: relative; }
+  .section-pad { padding: 120px 0; }
+  .light { background: var(--paper); color: var(--ink); }
+  .dark { background: var(--ink); color: var(--paper); }
+  .section-head { max-width: 640px; margin-bottom: 64px; }
+  .section-head .eyebrow { color: var(--lime-deep); margin-bottom: 14px; display:block; }
+  .dark .section-head .eyebrow { color: var(--lime); }
+  .section-head h2 { font-size: clamp(30px, 4vw, 46px); letter-spacing: -0.025em; line-height: 1.05; }
+  .section-head p { margin-top: 18px; font-size: 16.5px; line-height: 1.6; color: var(--ink-55); max-width: 52ch; }
+  .dark .section-head p { color: var(--paper-70); }
+
+  .reveal { opacity: 0; transform: translateY(28px); transition: opacity .8s var(--ease), transform .8s var(--ease); }
+  .reveal.in-view { opacity: 1; transform: translateY(0); }
+
+  /* ---------- How it works ---------- */
+  .steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; counter-reset: step; }
+  .step {
+    --c-size: 22px; --c-w: 2.5px; --c-inset: -1px; --c-color: var(--ink-15);
+    position: relative;
+    background: var(--white);
+    border-radius: var(--r-lg);
+    padding: 28px 22px 26px;
+    transition: transform .5s var(--ease);
+  }
+  .step:hover { transform: translateY(-6px); }
+  .step:hover .corner { border-color: var(--lime-deep); }
+  .step .corner { transition: border-color .3s var(--ease); }
+  .step-kicker { font-family: var(--font-display); font-weight: 800; font-size: 13px; color: var(--ink-30); margin-bottom: 20px; }
+  .step h3 { font-size: 19px; letter-spacing: -0.01em; margin-bottom: 10px; }
+  .step p { font-size: 14px; line-height: 1.55; color: var(--ink-55); }
+  @media (max-width: 900px) { .steps { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 560px) { .steps { grid-template-columns: 1fr; } }
+
+  /* ---------- Results ---------- */
+  .results-top { display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 24px; margin-bottom: 56px; }
+  .live-badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: var(--paper-08); border: 1px solid var(--paper-15);
+    padding: 8px 14px; border-radius: var(--r-pill);
+    font-size: 11px; font-weight: 800; letter-spacing: .09em; color: var(--paper-80);
+  }
+  .live-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--coral); box-shadow: 0 0 0 0 rgba(255,96,72,.6); animation: pulse 1.8s infinite; }
+  @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(255,96,72,.55);} 70% { box-shadow: 0 0 0 9px rgba(255,96,72,0);} 100% { box-shadow: 0 0 0 0 rgba(255,96,72,0);} }
+
+  .stat-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--paper-15); border: 1px solid var(--paper-15); border-radius: var(--r-lg); overflow: hidden; margin-bottom: 56px; }
+  .stat { background: var(--ink); padding: 30px 26px; }
+  .stat strong { display: block; font-family: var(--font-display); font-size: clamp(30px,4vw,42px); font-weight: 800; color: var(--lime); }
+  .stat span { font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--paper-60); }
+
+  .board { border: 1px solid var(--paper-15); border-radius: var(--r-lg); overflow: hidden; }
+  .board-head, .board-row {
+    display: grid; grid-template-columns: 44px 2fr 1fr 1fr 1fr;
+    gap: 12px; align-items: center; padding: 16px 22px;
+  }
+  .board-head { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--paper-60); border-bottom: 1px solid var(--paper-15); }
+  .board-row { border-bottom: 1px solid var(--paper-08); font-size: 14.5px; }
+  .board-row:last-child { border-bottom: none; }
+  .board-rank { font-family: var(--font-display); font-weight: 800; color: var(--paper-60); }
+  .board-row:nth-child(2) .board-rank { color: var(--lime); }
+  .board-team { font-weight: 700; }
+  .board-team small { display: block; font-weight: 500; color: var(--paper-60); font-size: 12px; margin-top: 2px; }
+  .board-time, .board-found { color: var(--cyan); font-weight: 600; }
+  .board-reward { color: var(--paper-60); font-size: 13px; }
+  @media (max-width: 700px) {
+    .board-head { display: none; }
+    .board-row { grid-template-columns: 30px 1fr; grid-template-areas: "rank team" "rank meta"; row-gap: 4px; }
+    .board-rank { grid-area: rank; }
+    .board-team { grid-area: team; }
+    .board-time, .board-found, .board-reward { grid-area: meta; display: inline; margin-right: 14px; font-size: 12.5px; }
+  }
+  .results-note { margin-top: 20px; font-size: 12.5px; color: var(--paper-60); }
+
+  /* ---------- Download ---------- */
+  .download-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: center; }
+  .store-row { display: flex; gap: 12px; margin-top: 30px; flex-wrap: wrap; }
+  .store-badge {
+    display: flex; align-items: center; gap: 10px;
+    border: 1.5px solid var(--ink-15); border-radius: var(--r-md);
+    padding: 12px 18px; font-size: 13px;
+  }
+  .store-badge strong { display: block; font-family: var(--font-display); font-weight: 800; font-size: 14px; }
+  .store-badge span { color: var(--ink-55); font-size: 11px; }
+  .store-badge b { font-size: 9px; letter-spacing: .07em; background: var(--ink-08); color: var(--ink-55); padding: 3px 7px; border-radius: var(--r-pill); margin-left: auto; }
+
+  .waitlist { background: var(--white); border: 1px solid var(--ink-08); border-radius: var(--r-xl); padding: 34px; }
+  .waitlist h3 { font-size: 20px; margin-bottom: 8px; }
+  .waitlist p.hint { font-size: 13.5px; color: var(--ink-55); margin-bottom: 22px; line-height: 1.5; }
+  .waitlist-form { display: flex; gap: 10px; flex-wrap: wrap; }
+  .waitlist-form input {
+    flex: 1; min-width: 200px;
+    font-family: var(--font-body); font-size: 15px;
+    padding: 15px 18px; border-radius: var(--r-md);
+    border: 1.5px solid var(--ink-15); background: var(--paper);
+    color: var(--ink);
+  }
+  .waitlist-form input:focus { border-color: var(--ink); }
+  .form-status { margin-top: 14px; font-size: 13.5px; font-weight: 600; min-height: 18px; }
+  .form-status.ok { color: #2C8B63; }
+  .form-status.err { color: #C43C3C; }
+
+  /* ---------- Footer ---------- */
+  footer { background: var(--ink); color: var(--paper); padding: 64px 0 36px; }
+  .foot-top { display: flex; justify-content: space-between; gap: 40px; flex-wrap: wrap; padding-bottom: 40px; border-bottom: 1px solid var(--paper-15); }
+  .foot-brand { display: flex; align-items: center; gap: 12px; }
+  .foot-brand svg { width: 34px; height: 34px; }
+  .foot-brand span { font-family: var(--font-display); font-weight: 800; font-size: 19px; }
+  .foot-domains { font-size: 13px; color: var(--paper-60); margin-top: 10px; max-width: 40ch; line-height: 1.6; }
+  .foot-formats { display: flex; flex-wrap: wrap; gap: 8px; align-content: flex-start; max-width: 420px; }
+  .format-chip { font-size: 11.5px; font-weight: 700; border: 1px solid var(--paper-15); color: var(--paper-70); padding: 7px 12px; border-radius: var(--r-pill); }
+  .foot-bottom { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px; padding-top: 26px; font-size: 12.5px; color: var(--paper-60); }
+
+  @media (max-width: 860px) {
+    .hero .wrap { grid-template-columns: 1fr; }
+    .hero-phone { order: -1; margin-bottom: 12px; }
+    .download-grid { grid-template-columns: 1fr; gap: 40px; }
+    .section-pad { padding: 84px 0; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .corner, .scanline, .hero-wordmark-wrap, .reveal { animation: none !important; transition: none !important; opacity: 1 !important; filter: none !important; transform: none !important; }
+    .live-dot { animation: none; }
+  }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="wrap">
+    <a class="nav-logo" href="#top">
+      <svg viewBox="0 0 1024 1024"><rect width="1024" height="1024" rx="204.8" fill="#151612"/><path d="M368.64,194.56 H194.56 V368.64" fill="none" stroke="#C8FF00" stroke-width="46.08"/><path d="M655.36,194.56 H829.44 V368.64" fill="none" stroke="#C8FF00" stroke-width="46.08"/><path d="M194.56,655.36 V829.44 H368.64" fill="none" stroke="#C8FF00" stroke-width="46.08"/><path d="M829.44,655.36 V829.44 H655.36" fill="none" stroke="#C8FF00" stroke-width="46.08"/><path d="M506.88,276.48 H604.16 L445.44,747.52 H348.16 Z" fill="#C8FF00"/></svg>
+      <span>CLUTRL</span>
+    </a>
+    <div class="nav-links">
+      <a href="#how">How it works</a>
+      <a href="#results">Results</a>
+      <a href="#download" class="btn btn-lime nav-cta">Get the app</a>
+    </div>
+  </div>
+</nav>
+
+<main id="top">
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-glow"></div>
+    <div class="hero-grid"></div>
+    <div class="wrap">
+      <div class="hero-copy scan-frame">
+        <div class="corners">
+          <div class="corner tl"></div>
+          <div class="corner tr"></div>
+          <div class="corner bl"></div>
+          <div class="corner br"></div>
+        </div>
+        <div class="scanline"></div>
+        <div class="hero-wordmark-wrap">
+          <p class="eyebrow hero-eyebrow">Follow the clues. Find the experience.</p>
+          <h1>The world is<br /><em>your gameboard.</em></h1>
+          <p class="hero-sub">CLUTRL turns real streets, venues, and events into camera-first scavenger hunts. Scan to verify every discovery, race the clock with your team, and walk away with a reward nobody else earned.</p>
+          <div class="hero-actions">
+            <a href="#download" class="btn btn-lime">Get early access</a>
+            <a href="#how" class="btn btn-outline">See how it works</a>
+          </div>
+          <div class="hero-meta">
+            <div><strong>10+</strong><span>Discoveries per hunt</span></div>
+            <div><strong>Base · Live · Immersive</strong><span>Access tiers</span></div>
+            <div><strong>iOS &amp; Android</strong><span>One app, both roles</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="hero-phone">
+        <div class="phone">
+          <div class="phone-screen">
+            <div class="phone-row">
+              <span class="phone-tag">DISCOVERY 03 OF 10</span>
+              <span class="phone-pill">IMMERSIVE</span>
+            </div>
+            <div class="phone-track"><i></i></div>
+            <div class="phone-media"><span>VIDEO CLUE</span></div>
+            <div class="phone-card">
+              <p>Watch the twelve-second clip. Follow the mural's painted gaze to the next target.</p>
+            </div>
+            <div class="phone-btn">SCAN THE TARGET QR</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <section id="how" class="light section-pad">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <span class="eyebrow">The loop</span>
+        <h2>Four beats. Every discovery.</h2>
+        <p>The same sequence repeats at every target, whether you're chasing one clue or all ten — read, find, prove it, get rewarded.</p>
+      </div>
+      <div class="steps">
+        <div class="step reveal scan-frame">
+          <div class="corners"><div class="corner tl"></div><div class="corner tr"></div><div class="corner bl"></div><div class="corner br"></div></div>
+          <div class="step-kicker">01</div>
+          <h3>Join the hunt</h3>
+          <p>Enter a hunt code or scan the event's start QR. Guests can jump in with just a name — no account wall.</p>
+        </div>
+        <div class="step reveal scan-frame">
+          <div class="corners"><div class="corner tl"></div><div class="corner tr"></div><div class="corner bl"></div><div class="corner br"></div></div>
+          <div class="step-kicker">02</div>
+          <h3>Read the clue</h3>
+          <p>Text, photo, video, or a geolocated AR moment — every clue points to one real, physical target.</p>
+        </div>
+        <div class="step reveal scan-frame">
+          <div class="corners"><div class="corner tl"></div><div class="corner tr"></div><div class="corner bl"></div><div class="corner br"></div></div>
+          <div class="step-kicker">03</div>
+          <h3>Scan to confirm</h3>
+          <p>Find the printed marker and scan it. Verification happens on the server — no guessing, no faking it.</p>
+        </div>
+        <div class="step reveal scan-frame">
+          <div class="corners"><div class="corner tl"></div><div class="corner tr"></div><div class="corner bl"></div><div class="corner br"></div></div>
+          <div class="step-kicker">04</div>
+          <h3>Claim your reward</h3>
+          <p>Finish the trail and unlock a single-use reward code, issued only to teams who actually completed it.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- RESULTS -->
+  <section id="results" class="dark section-pad">
+    <div class="wrap">
+      <div class="results-top reveal">
+        <div class="section-head" style="margin-bottom:0;">
+          <span class="eyebrow">Preview hunt · Neon After Dark</span>
+          <h2>Live from the trail.</h2>
+        </div>
+        <div class="live-badge"><span class="live-dot"></span>SAMPLE DATA · INTERNAL PREVIEW</div>
+      </div>
+
+      <div class="stat-row reveal">
+        <div class="stat"><strong class="tabular">10</strong><span>Discoveries in this hunt</span></div>
+        <div class="stat"><strong class="tabular">4</strong><span>Teams on the trail tonight</span></div>
+        <div class="stat"><strong class="tabular">58m</strong><span>Fastest finish</span></div>
+      </div>
+
+      <div class="board reveal">
+        <div class="board-head">
+          <span>#</span><span>Team</span><span>Found</span><span>Time</span><span>Reward</span>
+        </div>
+        <div class="board-row">
+          <span class="board-rank tabular">01</span>
+          <span class="board-team">Lucky Seven<small>Finished · Arts District</small></span>
+          <span class="board-found tabular">10/10</span>
+          <span class="board-time tabular">58m</span>
+          <span class="board-reward">VIP rooftop pass</span>
+        </div>
+        <div class="board-row">
+          <span class="board-rank tabular">02</span>
+          <span class="board-team">Maya + Theo<small>Finished · Arts District</small></span>
+          <span class="board-found tabular">10/10</span>
+          <span class="board-time tabular">1h 04m</span>
+          <span class="board-reward">VIP rooftop pass</span>
+        </div>
+        <div class="board-row">
+          <span class="board-rank tabular">03</span>
+          <span class="board-team">The Night Owls<small>Finished · Arts District</small></span>
+          <span class="board-found tabular">10/10</span>
+          <span class="board-time tabular">1h 11m</span>
+          <span class="board-reward">VIP rooftop pass</span>
+        </div>
+        <div class="board-row">
+          <span class="board-rank tabular">04</span>
+          <span class="board-team">Team Juniper<small>Discovery 8 · Arts District</small></span>
+          <span class="board-found tabular">8/10</span>
+          <span class="board-time tabular">—</span>
+          <span class="board-reward">Still on the trail</span>
+        </div>
+      </div>
+      <p class="results-note">Sample results from our internal preview build of "Neon After Dark." Live public leaderboards ship with general release.</p>
+    </div>
+  </section>
+
+  <!-- DOWNLOAD -->
+  <section id="download" class="light section-pad">
+    <div class="wrap download-grid">
+      <div class="reveal">
+        <span class="eyebrow" style="color:var(--lime-deep);">Get the app</span>
+        <h2 style="font-size:clamp(28px,3.6vw,40px); letter-spacing:-0.02em; margin-top:14px;">CLUTRL is almost ready to play.</h2>
+        <p style="margin-top:16px; font-size:16px; line-height:1.6; color:var(--ink-55); max-width:46ch;">We're finishing testing before general release on iOS and Android. Get on the list and we'll email you the moment it's live — first hunts included.</p>
+        <div class="store-row">
+          <div class="store-badge"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="6" y="2.5" width="12" height="19" rx="2.4"/><line x1="10.5" y1="18.4" x2="13.5" y2="18.4"/></svg><span><strong>iOS</strong><span>App Store</span></span><b>SOON</b></div>
+          <div class="store-badge"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 4.5v15l14 -7.5z"/></svg><span><strong>Android</strong><span>Google Play</span></span><b>SOON</b></div>
+        </div>
+      </div>
+
+      <div class="waitlist reveal">
+        <h3>Get early access</h3>
+        <p class="hint">One email, one message, the day we ship. No spam — this list exists for exactly one reason.</p>
+        <form class="waitlist-form" id="waitlist-form">
+          <input type="email" id="waitlist-email" placeholder="you@example.com" required autocomplete="email" />
+          <button type="submit" class="btn btn-lime" id="waitlist-submit">Notify me</button>
+        </form>
+        <p class="form-status" id="waitlist-status" role="status"></p>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="foot-top">
+      <div>
+        <div class="foot-brand">
+          <svg viewBox="0 0 1024 1024"><rect width="1024" height="1024" rx="204.8" fill="#151612" stroke="#F4F0E7" stroke-width="10"/><path d="M368.64,194.56 H194.56 V368.64" fill="none" stroke="#C8FF00" stroke-width="46.08"/><path d="M655.36,194.56 H829.44 V368.64" fill="none" stroke="#C8FF00" stroke-width="46.08"/><path d="M194.56,655.36 V829.44 H368.64" fill="none" stroke="#C8FF00" stroke-width="46.08"/><path d="M829.44,655.36 V829.44 H655.36" fill="none" stroke="#C8FF00" stroke-width="46.08"/><path d="M506.88,276.48 H604.16 L445.44,747.52 H348.16 Z" fill="#C8FF00"/></svg>
+          <span>CLUTRL</span>
+        </div>
+        <p class="foot-domains">CLUTRL.com — organizers, pricing, and hunt management.<br />CLUTRL.fun — hunters, live events, and rewards. You're here.</p>
+      </div>
+      <div class="foot-formats">
+        <span class="format-chip">Pista</span>
+        <span class="format-chip">Haystack</span>
+        <span class="format-chip">Hare &amp; Hounds</span>
+        <span class="format-chip">Quest</span>
+        <span class="format-chip">AR</span>
+        <span class="format-chip">Live</span>
+      </div>
+    </div>
+    <div class="foot-bottom">
+      <span>© 2026 CLUTRL. Clue Trail.</span>
+      <span>Prototype build — not yet released.</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // Scroll-triggered reveals
+  var revealEls = document.querySelectorAll('.reveal');
+  if ('IntersectionObserver' in window) {
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('in-view');
+          io.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.15, rootMargin: '0px 0px -40px 0px' });
+    revealEls.forEach(function (el) { io.observe(el); });
+  } else {
+    revealEls.forEach(function (el) { el.classList.add('in-view'); });
+  }
+
+  // Waitlist signup — writes directly to Supabase via the public anon key.
+  var SUPABASE_URL = 'https://ugdyyqvuiypzpfaqyraj.supabase.co';
+  var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVnZHl5cXZ1aXlwenBmYXF5cmFqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU3MjcyODUsImV4cCI6MjEwMTMwMzI4NX0.KpTJQpd0H1bSZ65xYFtbJELuoT-jxFupmDH_L6lIl_8';
+
+  var form = document.getElementById('waitlist-form');
+  var statusEl = document.getElementById('waitlist-status');
+  var submitBtn = document.getElementById('waitlist-submit');
+
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    var email = document.getElementById('waitlist-email').value.trim();
+    if (!email) return;
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Joining…';
+    statusEl.textContent = '';
+    statusEl.className = 'form-status';
+
+    fetch(SUPABASE_URL + '/rest/v1/waitlist_signups', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
+        'Prefer': 'return=minimal'
+      },
+      body: JSON.stringify({ email: email, source: 'clutrl.fun' })
+    }).then(function (res) {
+      if (res.ok) {
+        statusEl.textContent = "You're on the list. Watch your inbox.";
+        statusEl.className = 'form-status ok';
+        form.reset();
+      } else if (res.status === 409) {
+        statusEl.textContent = "That email's already on the list.";
+        statusEl.className = 'form-status ok';
+      } else {
+        statusEl.textContent = 'Something went wrong — try again in a moment.';
+        statusEl.className = 'form-status err';
+      }
+    }).catch(function () {
+      statusEl.textContent = 'Network error — try again in a moment.';
+      statusEl.className = 'form-status err';
+    }).finally(function () {
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Notify me';
+    });
+  });
+</script>
+
+</body>
+</html>

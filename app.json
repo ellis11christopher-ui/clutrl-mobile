@@ -1,0 +1,49 @@
+{
+  "expo": {
+    "name": "CLUTRL",
+    "slug": "clutrl",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "scheme": "clutrl",
+    "icon": "./assets/icon.png",
+    "ios": {
+      "supportsTablet": true,
+      "icon": "./assets/icon.png",
+      "infoPlist": {
+        "NSCameraUsageDescription": "CLUTRL uses your camera to scan hunt QR codes and capture AR moments.",
+        "NSLocationWhenInUseUsageDescription": "CLUTRL uses your location during Live and Immersive hunts so your Hunt Master can follow progress and place AR discoveries."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#151612"
+      },
+      "permissions": [
+        "CAMERA",
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow CLUTRL to scan target QR codes and capture hunt moments.",
+          "microphonePermission": "Allow CLUTRL to record video hunt moments.",
+          "recordAudioAndroid": true
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Allow CLUTRL to share your location while a Live or Immersive hunt is active."
+        }
+      ]
+    ]
+  }
+}

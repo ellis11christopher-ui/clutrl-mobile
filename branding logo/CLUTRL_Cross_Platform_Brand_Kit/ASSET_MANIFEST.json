@@ -1,0 +1,544 @@
+{
+  "assets": [
+    {
+      "path": "01_Master_Logos/PDF/CLUTRL_OneColor_Ink.pdf",
+      "bytes": 2257
+    },
+    {
+      "path": "01_Master_Logos/PDF/CLUTRL_OneColor_White.pdf",
+      "bytes": 2245
+    },
+    {
+      "path": "01_Master_Logos/PDF/CLUTRL_Primary_Dark.pdf",
+      "bytes": 2358
+    },
+    {
+      "path": "01_Master_Logos/PDF/CLUTRL_Primary_Light.pdf",
+      "bytes": 2358
+    },
+    {
+      "path": "01_Master_Logos/PDF/CLUTRL_Stacked_Dark.pdf",
+      "bytes": 2296
+    },
+    {
+      "path": "01_Master_Logos/PDF/CLUTRL_Stacked_Light.pdf",
+      "bytes": 2296
+    },
+    {
+      "path": "01_Master_Logos/PDF/CLUTRL_Symbol_Ink_Lime.pdf",
+      "bytes": 1298
+    },
+    {
+      "path": "01_Master_Logos/PDF/CLUTRL_Symbol_Ink_White.pdf",
+      "bytes": 1294
+    },
+    {
+      "path": "01_Master_Logos/PDF/CLUTRL_Symbol_Lime_Ink.pdf",
+      "bytes": 1298
+    },
+    {
+      "path": "01_Master_Logos/PDF/CLUTRL_Symbol_White_Ink.pdf",
+      "bytes": 1294
+    },
+    {
+      "path": "01_Master_Logos/PDF/CLUTRL_Wordmark_Ink_Lime.pdf",
+      "bytes": 2084
+    },
+    {
+      "path": "01_Master_Logos/PDF/CLUTRL_Wordmark_White_Lime.pdf",
+      "bytes": 2068
+    },
+    {
+      "path": "01_Master_Logos/PNG/CLUTRL_OneColor_Ink_1200px.png",
+      "bytes": 14220
+    },
+    {
+      "path": "01_Master_Logos/PNG/CLUTRL_OneColor_Ink_2400px.png",
+      "bytes": 31392
+    },
+    {
+      "path": "01_Master_Logos/PNG/CLUTRL_OneColor_Ink_600px.png",
+      "bytes": 6948
+    },
+    {
+      "path": "01_Master_Logos/PNG/CLUTRL_OneColor_White_1200px.png",
+      "bytes": 10416
+    },
+    {
+      "path": "01_Master_Logos/PNG/CLUTRL_OneColor_White_2400px.png",
+      "bytes": 24088
+    },
+    {
+      "path": "01_Master_Logos/PNG/CLUTRL_OneColor_White_600px.png",
+      "bytes": 4993
+    },
+    {
+      "path": "01_Master_Logos/PNG/CLUTRL_Primary_Dark_1200px.png",
+      "bytes": 14214
+    },
+    {
+      "path": "01_Master_Logos/PNG/CLUTRL_Primary_Dark_2400px.png",
+      "bytes": 31253
+    },
+    {
+      "path": "01_Master_Logos/PNG/CLUTRL_Primary_Dark_600px.png",
+      "bytes": 6922
+    },
+    {
+      "path": "01_Master_Logos/PNG/CLUTRL_Primary_Light_1200px.png",
+      "bytes": 16468
+    },
+    {
+      "path": "01_Master_Logos/PNG/CLUTRL_Primary_Light_2400px.png",
+      "bytes": 35942
+    },
+    {
+      "path": "01_Master_Logos/PNG/CLUTRL_Primary_Light_600px.png",
+      "bytes": 8123
+    },
+    {
+      "path": "01_Master_Logos/PNG/CLUTRL_Stacked_Dark_1200px.png",
+      "bytes": 28762
+    },
+    {
+      "path": "01_Master_Logos/PNG/CLUTRL_Stacked_Dark_2400px.png",
+      "bytes": 68301
+    },
+    {
+      "path": "01_Master_Logos/PNG/CLUTRL_Stacked_Dark_600px.png",
+      "bytes": 13027
+    },
+    {
+      "path": "01_Master_Logos/PNG/CLUTRL_Stacked_Light_1200px.png",
+      "bytes": 32580
+    },
+    {
+      "path": "01_Master_Logos/PNG/CLUTRL_Stacked_Light_2400px.png",
+      "bytes": 75717
+    },
+    {
+      "path": "01_Master_Logos/PNG/CLUTRL_Stacked_Light_600px.png",
+      "bytes": 14737
+    },
+    {
+      "path": "01_Master_Logos/PNG/CLUTRL_Symbol_Ink_Lime_1024px.png",
+      "bytes": 23697
+    },
+    {
+      "path": "01_Master_Logos/PNG/CLUTRL_Symbol_Ink_White_1024px.png",
+      "bytes": 24893
+    },
+    {
+      "path": "01_Master_Logos/PNG/CLUTRL_Symbol_Lime_Ink_1024px.png",
+      "bytes": 22312
+    },
+    {
+      "path": "01_Master_Logos/PNG/CLUTRL_Symbol_White_Ink_1024px.png",
+      "bytes": 22001
+    },
+    {
+      "path": "01_Master_Logos/PNG/CLUTRL_Wordmark_Ink_Lime_1200px.png",
+      "bytes": 16586
+    },
+    {
+      "path": "01_Master_Logos/PNG/CLUTRL_Wordmark_Ink_Lime_2400px.png",
+      "bytes": 37119
+    },
+    {
+      "path": "01_Master_Logos/PNG/CLUTRL_Wordmark_Ink_Lime_600px.png",
+      "bytes": 7923
+    },
+    {
+      "path": "01_Master_Logos/PNG/CLUTRL_Wordmark_White_Lime_1200px.png",
+      "bytes": 12870
+    },
+    {
+      "path": "01_Master_Logos/PNG/CLUTRL_Wordmark_White_Lime_2400px.png",
+      "bytes": 29023
+    },
+    {
+      "path": "01_Master_Logos/PNG/CLUTRL_Wordmark_White_Lime_600px.png",
+      "bytes": 6004
+    },
+    {
+      "path": "01_Master_Logos/SVG/CLUTRL_OneColor_Ink.svg",
+      "bytes": 2278
+    },
+    {
+      "path": "01_Master_Logos/SVG/CLUTRL_OneColor_White.svg",
+      "bytes": 2278
+    },
+    {
+      "path": "01_Master_Logos/SVG/CLUTRL_Primary_Dark.svg",
+      "bytes": 2396
+    },
+    {
+      "path": "01_Master_Logos/SVG/CLUTRL_Primary_Light.svg",
+      "bytes": 2396
+    },
+    {
+      "path": "01_Master_Logos/SVG/CLUTRL_Stacked_Dark.svg",
+      "bytes": 2160
+    },
+    {
+      "path": "01_Master_Logos/SVG/CLUTRL_Stacked_Light.svg",
+      "bytes": 2160
+    },
+    {
+      "path": "01_Master_Logos/SVG/CLUTRL_Symbol_Ink_Lime.svg",
+      "bytes": 635
+    },
+    {
+      "path": "01_Master_Logos/SVG/CLUTRL_Symbol_Ink_White.svg",
+      "bytes": 635
+    },
+    {
+      "path": "01_Master_Logos/SVG/CLUTRL_Symbol_Lime_Ink.svg",
+      "bytes": 635
+    },
+    {
+      "path": "01_Master_Logos/SVG/CLUTRL_Symbol_White_Ink.svg",
+      "bytes": 635
+    },
+    {
+      "path": "01_Master_Logos/SVG/CLUTRL_Wordmark_Ink_Lime.svg",
+      "bytes": 1682
+    },
+    {
+      "path": "01_Master_Logos/SVG/CLUTRL_Wordmark_White_Lime.svg",
+      "bytes": 1682
+    },
+    {
+      "path": "02_App_Icons/Android/CLUTRL_Adaptive_Background_Color.txt",
+      "bytes": 8
+    },
+    {
+      "path": "02_App_Icons/Android/CLUTRL_Adaptive_Foreground.svg",
+      "bytes": 502
+    },
+    {
+      "path": "02_App_Icons/Android/CLUTRL_Adaptive_Foreground_108.png",
+      "bytes": 1156
+    },
+    {
+      "path": "02_App_Icons/Android/CLUTRL_Adaptive_Foreground_162.png",
+      "bytes": 1642
+    },
+    {
+      "path": "02_App_Icons/Android/CLUTRL_Adaptive_Foreground_216.png",
+      "bytes": 1908
+    },
+    {
+      "path": "02_App_Icons/Android/CLUTRL_Adaptive_Foreground_324.png",
+      "bytes": 2908
+    },
+    {
+      "path": "02_App_Icons/Android/CLUTRL_Adaptive_Foreground_432.png",
+      "bytes": 3884
+    },
+    {
+      "path": "02_App_Icons/Web/apple-touch-icon.png",
+      "bytes": 3597
+    },
+    {
+      "path": "02_App_Icons/Web/favicon-16x16.png",
+      "bytes": 540
+    },
+    {
+      "path": "02_App_Icons/Web/favicon-192x192.png",
+      "bytes": 3808
+    },
+    {
+      "path": "02_App_Icons/Web/favicon-32x32.png",
+      "bytes": 816
+    },
+    {
+      "path": "02_App_Icons/Web/favicon-48x48.png",
+      "bytes": 1216
+    },
+    {
+      "path": "02_App_Icons/Web/favicon-512x512.png",
+      "bytes": 10644
+    },
+    {
+      "path": "02_App_Icons/Web/favicon-64x64.png",
+      "bytes": 1452
+    },
+    {
+      "path": "02_App_Icons/Web/site.webmanifest",
+      "bytes": 376
+    },
+    {
+      "path": "02_App_Icons/iOS/CLUTRL_iOS_1024x1024.png",
+      "bytes": 13763
+    },
+    {
+      "path": "02_App_Icons/iOS/CLUTRL_iOS_120x120.png",
+      "bytes": 1537
+    },
+    {
+      "path": "02_App_Icons/iOS/CLUTRL_iOS_152x152.png",
+      "bytes": 1834
+    },
+    {
+      "path": "02_App_Icons/iOS/CLUTRL_iOS_167x167.png",
+      "bytes": 1928
+    },
+    {
+      "path": "02_App_Icons/iOS/CLUTRL_iOS_180x180.png",
+      "bytes": 2103
+    },
+    {
+      "path": "02_App_Icons/iOS/CLUTRL_iOS_20x20.png",
+      "bytes": 519
+    },
+    {
+      "path": "02_App_Icons/iOS/CLUTRL_iOS_29x29.png",
+      "bytes": 621
+    },
+    {
+      "path": "02_App_Icons/iOS/CLUTRL_iOS_40x40.png",
+      "bytes": 789
+    },
+    {
+      "path": "02_App_Icons/iOS/CLUTRL_iOS_512x512.png",
+      "bytes": 6022
+    },
+    {
+      "path": "02_App_Icons/iOS/CLUTRL_iOS_58x58.png",
+      "bytes": 912
+    },
+    {
+      "path": "02_App_Icons/iOS/CLUTRL_iOS_60x60.png",
+      "bytes": 938
+    },
+    {
+      "path": "02_App_Icons/iOS/CLUTRL_iOS_76x76.png",
+      "bytes": 1103
+    },
+    {
+      "path": "02_App_Icons/iOS/CLUTRL_iOS_80x80.png",
+      "bytes": 1047
+    },
+    {
+      "path": "02_App_Icons/iOS/CLUTRL_iOS_87x87.png",
+      "bytes": 1258
+    },
+    {
+      "path": "02_App_Icons/iOS/CLUTRL_iOS_App_Store_Master.svg",
+      "bytes": 577
+    },
+    {
+      "path": "03_Social_Media/Covers/CLUTRL_Facebook_Cover_1640x624.png",
+      "bytes": 25842
+    },
+    {
+      "path": "03_Social_Media/Covers/CLUTRL_LinkedIn_Company_Cover_1128x191.png",
+      "bytes": 9271
+    },
+    {
+      "path": "03_Social_Media/Covers/CLUTRL_X_Header_1500x500.png",
+      "bytes": 21363
+    },
+    {
+      "path": "03_Social_Media/Covers/CLUTRL_YouTube_Banner_2560x1440.png",
+      "bytes": 46891
+    },
+    {
+      "path": "03_Social_Media/Post_Templates/CLUTRL_Event_Announcement_1080x1350.png",
+      "bytes": 36967
+    },
+    {
+      "path": "03_Social_Media/Post_Templates/CLUTRL_Instagram_Post_1080x1080.png",
+      "bytes": 37527
+    },
+    {
+      "path": "03_Social_Media/Post_Templates/CLUTRL_Story_Reel_1080x1920.png",
+      "bytes": 40483
+    },
+    {
+      "path": "03_Social_Media/Profile/CLUTRL_Profile_Cream_1080.png",
+      "bytes": 25331
+    },
+    {
+      "path": "03_Social_Media/Profile/CLUTRL_Profile_Ink_Lime_1080.png",
+      "bytes": 19202
+    },
+    {
+      "path": "03_Social_Media/Profile/CLUTRL_Profile_Lime_1080.png",
+      "bytes": 24624
+    },
+    {
+      "path": "04_Website/CLUTRL_Hero_1920x720.png",
+      "bytes": 41094
+    },
+    {
+      "path": "04_Website/CLUTRL_Nav_Logo_Dark_Background.svg",
+      "bytes": 2396
+    },
+    {
+      "path": "04_Website/CLUTRL_Nav_Logo_Light_Background.svg",
+      "bytes": 2396
+    },
+    {
+      "path": "04_Website/CLUTRL_OpenGraph_1200x630.png",
+      "bytes": 26482
+    },
+    {
+      "path": "04_Website/CLUTRL_Web_App_Symbol.svg",
+      "bytes": 635
+    },
+    {
+      "path": "05_Print_Marketing/CLUTRL_Business_Card_Back_Bleed_1125x675.png",
+      "bytes": 17100
+    },
+    {
+      "path": "05_Print_Marketing/CLUTRL_Business_Card_Front_Bleed_1125x675.png",
+      "bytes": 21356
+    },
+    {
+      "path": "05_Print_Marketing/CLUTRL_Email_Signature_1200x300.png",
+      "bytes": 19161
+    },
+    {
+      "path": "05_Print_Marketing/CLUTRL_Event_Backdrop_6000x3000.png",
+      "bytes": 121138
+    },
+    {
+      "path": "05_Print_Marketing/CLUTRL_Flyer_Template_US_Letter_2550x3300.png",
+      "bytes": 108908
+    },
+    {
+      "path": "05_Print_Marketing/CLUTRL_Retractable_Banner_3000x7200.png",
+      "bytes": 164823
+    },
+    {
+      "path": "06_Apparel_Merch/CLUTRL_Cap_Patch_Symbol.svg",
+      "bytes": 635
+    },
+    {
+      "path": "06_Apparel_Merch/CLUTRL_Embroidery_OneColor_Source.svg",
+      "bytes": 2278
+    },
+    {
+      "path": "06_Apparel_Merch/CLUTRL_LeftChest_1800x1800.png",
+      "bytes": 57145
+    },
+    {
+      "path": "06_Apparel_Merch/CLUTRL_Screenprint_2Color.svg",
+      "bytes": 2396
+    },
+    {
+      "path": "06_Apparel_Merch/CLUTRL_TShirt_FullFront_4500x5400.png",
+      "bytes": 180100
+    },
+    {
+      "path": "06_Apparel_Merch/CLUTRL_TShirt_FullFront_Reversed_4500x5400.png",
+      "bytes": 171372
+    },
+    {
+      "path": "06_Apparel_Merch/EMBROIDERY_PRODUCTION_NOTE.txt",
+      "bytes": 408
+    },
+    {
+      "path": "07_Colorways/CLUTRL_Colorway_Coral_Cream.png",
+      "bytes": 27217
+    },
+    {
+      "path": "07_Colorways/CLUTRL_Colorway_Coral_Cream.svg",
+      "bytes": 2444
+    },
+    {
+      "path": "07_Colorways/CLUTRL_Colorway_Cream_Ink_Lime.png",
+      "bytes": 27923
+    },
+    {
+      "path": "07_Colorways/CLUTRL_Colorway_Cream_Ink_Lime.svg",
+      "bytes": 2444
+    },
+    {
+      "path": "07_Colorways/CLUTRL_Colorway_Cyan_Ink.png",
+      "bytes": 27250
+    },
+    {
+      "path": "07_Colorways/CLUTRL_Colorway_Cyan_Ink.svg",
+      "bytes": 2444
+    },
+    {
+      "path": "07_Colorways/CLUTRL_Colorway_Ink_Coral.png",
+      "bytes": 23756
+    },
+    {
+      "path": "07_Colorways/CLUTRL_Colorway_Ink_Coral.svg",
+      "bytes": 2444
+    },
+    {
+      "path": "07_Colorways/CLUTRL_Colorway_Ink_Cyan.png",
+      "bytes": 23991
+    },
+    {
+      "path": "07_Colorways/CLUTRL_Colorway_Ink_Cyan.svg",
+      "bytes": 2444
+    },
+    {
+      "path": "07_Colorways/CLUTRL_Colorway_Ink_Lime.png",
+      "bytes": 23591
+    },
+    {
+      "path": "07_Colorways/CLUTRL_Colorway_Ink_Lime.svg",
+      "bytes": 2444
+    },
+    {
+      "path": "07_Colorways/CLUTRL_Colorway_Lime_Ink.png",
+      "bytes": 26133
+    },
+    {
+      "path": "07_Colorways/CLUTRL_Colorway_Lime_Ink.svg",
+      "bytes": 2444
+    },
+    {
+      "path": "07_Colorways/CLUTRL_Colorway_Monochrome_Black.png",
+      "bytes": 24070
+    },
+    {
+      "path": "07_Colorways/CLUTRL_Colorway_Monochrome_Black.svg",
+      "bytes": 2326
+    },
+    {
+      "path": "07_Colorways/CLUTRL_Colorway_Monochrome_White.png",
+      "bytes": 24073
+    },
+    {
+      "path": "07_Colorways/CLUTRL_Colorway_Monochrome_White.svg",
+      "bytes": 2326
+    },
+    {
+      "path": "07_Colorways/CLUTRL_Colorway_Reference_Sheet.png",
+      "bytes": 282051
+    },
+    {
+      "path": "07_Colorways/CLUTRL_Colorway_White_Ink.png",
+      "bytes": 24070
+    },
+    {
+      "path": "07_Colorways/CLUTRL_Colorway_White_Ink.svg",
+      "bytes": 2326
+    },
+    {
+      "path": "08_Brand_Standards/CLUTRL_Brand_Standards_Concept_02.pdf",
+      "bytes": 229622
+    },
+    {
+      "path": "08_Brand_Standards/brand-tokens.json",
+      "bytes": 737
+    },
+    {
+      "path": "ASSET_MANIFEST.json",
+      "bytes": 13284
+    },
+    {
+      "path": "README.md",
+      "bytes": 1397
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+Use CLUTRL_Embroidery_OneColor_Source.svg for digitizing. Keep the scan-corner
+gaps open and preserve the slash angle. Minimum recommended left-chest width:
+3.25 in / 82.5 mm. Minimum cap symbol height: 1.75 in / 44.5 mm.
+
+A DST/PES stitch file must be digitized by the decorator for the selected
+garment, stabilizer, thread, needle, hoop, and machine. Do not auto-convert
+the vector without a sew-out test.

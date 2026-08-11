@@ -1,0 +1,11 @@
+node_modules/
+.env
+.expo/
+dist/
+web-build/
+*.log
+
+# Personal/financial documents that don't belong in version control.
+clutrl domain rcpt.pdf
+*rcpt*.pdf
+*receipt*.pdf

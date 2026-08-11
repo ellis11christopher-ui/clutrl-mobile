@@ -1,0 +1,27 @@
+{
+  "brand": "CLUTRL",
+  "pronunciation": "Clue Trail",
+  "tagline": "The world is your gameboard.",
+  "launch_line": "Follow the clues. Find the experience.",
+  "domains": {
+    "platform": "CLUTRL.com",
+    "participant": "CLUTRL.fun"
+  },
+  "colors": {
+    "trail_black": "#151612",
+    "field_cream": "#F4F0E7",
+    "beacon_lime": "#C8FF00",
+    "rally_coral": "#FF6048",
+    "signal_cyan": "#00D7FF",
+    "white": "#FFFFFF"
+  },
+  "minimum_sizes": {
+    "digital_symbol_px": 24,
+    "digital_signature_width_px": 120,
+    "print_symbol_mm": 9,
+    "print_signature_width_mm": 32,
+    "embroidery_left_chest_width_mm": 82.5,
+    "embroidery_cap_symbol_height_mm": 44.5
+  },
+  "logo_clear_space": "One scan-corner arm on all sides"
+}

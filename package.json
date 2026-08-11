@@ -1,0 +1,43 @@
+{
+  "name": "clutrl-mobile",
+  "version": "0.1.0",
+  "private": true,
+  "main": "node_modules/expo/AppEntry.js",
+  "scripts": {
+    "start": "expo start",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
+    "web": "expo start --web",
+    "typecheck": "tsc --noEmit",
+    "test": "node --import tsx --test tests/*.test.ts",
+    "export:web": "expo export --platform web",
+    "qr:generate": "node scripts/generate-qr-sheet.mjs",
+    "qr:generate:live": "node scripts/generate-live-hunt-qr-sheet.mjs"
+  },
+  "dependencies": {
+    "@expo/vector-icons": "^15.1.1",
+    "@react-native-async-storage/async-storage": "2.2.0",
+    "@supabase/supabase-js": "^2.112.2",
+    "expo": "~57.0.9",
+    "expo-camera": "~57.0.3",
+    "expo-font": "~57.0.1",
+    "expo-haptics": "~57.0.1",
+    "expo-linear-gradient": "~57.0.1",
+    "expo-location": "~57.0.7",
+    "expo-status-bar": "~57.0.1",
+    "qrcode": "^1.5.4",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "react-native": "0.86.2",
+    "react-native-safe-area-context": "~5.7.0",
+    "react-native-url-polyfill": "^4.0.0",
+    "react-native-web": "~0.21.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "@types/qrcode": "^1.5.6",
+    "@types/react": "~19.2.2",
+    "tsx": "^4.23.1",
+    "typescript": "~6.0.3"
+  }
+}

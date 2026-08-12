@@ -4,7 +4,9 @@ export type ClueKind = 'text' | 'photo' | 'video' | 'ar';
 export type Screen =
   | 'auth'
   | 'home'
+  | 'celebration'
   | 'ad'
+  | 'countdown'
   | 'clue'
   | 'scanner'
   | 'reward'

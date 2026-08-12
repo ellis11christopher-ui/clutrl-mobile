@@ -25,7 +25,9 @@ import { HomeScreen } from './src/screens/HomeScreen';
 import {
   AdScreen,
   ArScreen,
+  CelebrationScreen,
   ClueScreen,
+  CountdownScreen,
   RewardScreen,
   ScannerScreen,
 } from './src/screens/HuntScreens';
@@ -90,6 +92,7 @@ function AppShell() {
   const [completedIds, setCompletedIds] = useState<string[]>([]);
   const [adQueue, setAdQueue] = useState<AdStep[]>([]);
   const [adDestination, setAdDestination] = useState<Screen>('clue');
+  const [countdownNext, setCountdownNext] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>(initialMessages);
 
   const [remoteMembership, setRemoteMembership] = useState<JoinHuntResult | null>(null);
@@ -112,6 +115,9 @@ function AppShell() {
     : completedIds.length;
 
   function showAds(queue: AdStep[], destination: Screen) {
+    // Used only for the pre-clue ad on join — nothing has been found yet, so
+    // no celebration or countdown belongs here.
+    setCountdownNext(false);
     if (queue.length === 0) {
       setScreen(destination);
       return;
@@ -119,6 +125,32 @@ function AppShell() {
     setAdQueue(queue);
     setAdDestination(destination);
     setScreen('ad');
+  }
+
+  // A confirmed scan always celebrates first, then runs the normal ad queue,
+  // then (only if there's a next clue waiting) a 3-2-1 countdown before it
+  // reveals. Finishing the hunt skips straight to the reward screen instead.
+  function celebrateThenAds(queue: AdStep[], destination: Screen) {
+    setCountdownNext(true);
+    setAdQueue(queue);
+    setAdDestination(destination);
+    setScreen('celebration');
+  }
+
+  function proceedAfterAds(destination: Screen) {
+    setScreen(destination === 'clue' && countdownNext ? 'countdown' : destination);
+  }
+
+  function afterCelebration() {
+    if (adQueue.length === 0) {
+      proceedAfterAds(adDestination);
+      return;
+    }
+    setScreen('ad');
+  }
+
+  function afterCountdown() {
+    setScreen('clue');
   }
 
   async function startHunt(code: string) {
@@ -164,7 +196,7 @@ function AppShell() {
     });
     setCompletedIds(plan.completedIds);
     setCurrentIndex(plan.nextIndex);
-    showAds(plan.ads, plan.destination);
+    celebrateThenAds(plan.ads, plan.destination);
   }
 
   async function handleScan(rawValue: string) {
@@ -186,9 +218,9 @@ function AppShell() {
 
       if (result.hunt_complete) {
         setRemoteReward(result.reward ?? null);
-        showAds(postAds, 'reward');
+        celebrateThenAds(postAds, 'reward');
       } else {
-        showAds(postAds, 'clue');
+        celebrateThenAds(postAds, 'clue');
       }
       return;
     }
@@ -205,7 +237,7 @@ function AppShell() {
       return;
     }
     setAdQueue([]);
-    setScreen(adDestination);
+    proceedAfterAds(adDestination);
   }
 
   function resetDemo() {
@@ -213,6 +245,7 @@ function AppShell() {
     setCurrentIndex(0);
     setCompletedIds([]);
     setAdQueue([]);
+    setCountdownNext(false);
     setRemoteMembership(null);
     setRemoteItems([]);
     setRemoteReward(null);
@@ -229,7 +262,11 @@ function AppShell() {
     setMessages((items) => [...items, next]);
   }
 
-  const inverse = screen === 'scanner' || screen === 'ar';
+  const inverse =
+    screen === 'scanner' ||
+    screen === 'ar' ||
+    screen === 'celebration' ||
+    screen === 'countdown';
   const needsAuth = configured && !loading && !session && !authSkipped;
 
   if (configured && loading) {
@@ -273,12 +310,20 @@ function AppShell() {
           />
         ) : null}
 
+        {screen === 'celebration' ? (
+          <CelebrationScreen onDone={afterCelebration} />
+        ) : null}
+
         {screen === 'ad' && adQueue[0] ? (
           <AdScreen
             step={adQueue[0]}
             remaining={adQueue.length}
             onContinue={advanceAd}
           />
+        ) : null}
+
+        {screen === 'countdown' ? (
+          <CountdownScreen onDone={afterCountdown} />
         ) : null}
 
         {screen === 'clue' && clue ? (

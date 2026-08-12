@@ -4,6 +4,7 @@ import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useRef, useState } from 'react';
 import {
+  AccessibilityInfo,
   ActivityIndicator,
   Alert,
   Animated,
@@ -29,6 +30,189 @@ import {
 import type { AdStep } from '../domain/huntFlow';
 import { colors, radii, shadow } from '../theme';
 import type { Clue, HuntTier } from '../types';
+
+function useReducedMotionPreference(): boolean {
+  const [reduced, setReduced] = useState(false);
+  useEffect(() => {
+    let active = true;
+    AccessibilityInfo.isReduceMotionEnabled().then((enabled) => {
+      if (active) setReduced(enabled);
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
+  return reduced;
+}
+
+const CELEBRATION_DURATION_MS = 2000;
+
+// Plays for a fixed 2 seconds after a confirmed scan, before the sponsor ad.
+// No audio yet — a real crowd-cheer sound file would need to be dropped into
+// assets/audio and wired through expo-av; until then this leans on motion
+// (simulated fireworks) and haptics to sell the moment.
+export function CelebrationScreen({ onDone }: { onDone: () => void }) {
+  const reduceMotion = useReducedMotionPreference();
+
+  useEffect(() => {
+    void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    const secondPulse = setTimeout(() => {
+      void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    }, 450);
+    const done = setTimeout(onDone, CELEBRATION_DURATION_MS);
+    return () => {
+      clearTimeout(secondPulse);
+      clearTimeout(done);
+    };
+  }, [onDone]);
+
+  const bursts: { left: `${number}%`; top: `${number}%`; delay: number; colors: string[] }[] = [
+    { left: '20%', top: '30%', delay: 0, colors: [colors.lime, colors.cyan] },
+    { left: '74%', top: '22%', delay: 220, colors: [colors.coral, colors.lime] },
+    { left: '50%', top: '46%', delay: 420, colors: [colors.cyan, colors.coral] },
+    { left: '28%', top: '62%', delay: 620, colors: [colors.lime, colors.white] },
+  ];
+
+  return (
+    <View style={styles.celebratePage}>
+      {!reduceMotion
+        ? bursts.map((burst, index) => <FireworkBurst key={index} {...burst} />)
+        : null}
+      <View style={styles.celebrateCenter}>
+        <View style={styles.celebrateBadge}>
+          <Ionicons name="checkmark" size={30} color={colors.ink} />
+        </View>
+        <Text style={styles.celebrateTitle}>Discovery confirmed</Text>
+        <Text style={styles.celebrateBody}>Nice find. The crowd's cheering.</Text>
+      </View>
+    </View>
+  );
+}
+
+function FireworkBurst({
+  left,
+  top,
+  delay,
+  colors: burstColors,
+}: {
+  left: `${number}%`;
+  top: `${number}%`;
+  delay: number;
+  colors: string[];
+}) {
+  const progress = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    const anim = Animated.timing(progress, {
+      toValue: 1,
+      duration: 950,
+      delay,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: true,
+    });
+    anim.start();
+    return () => anim.stop();
+  }, [progress, delay]);
+
+  const particleCount = 10;
+  const particles = Array.from({ length: particleCount }, (_, i) => {
+    const angle = (2 * Math.PI * i) / particleCount;
+    const radius = 66 + (i % 3) * 12;
+    return {
+      dx: Math.cos(angle) * radius,
+      dy: Math.sin(angle) * radius,
+      color: burstColors[i % burstColors.length]!,
+    };
+  });
+
+  return (
+    <View style={[styles.burstOrigin, { left, top }]} pointerEvents="none">
+      {particles.map((particle, index) => (
+        <Animated.View
+          key={index}
+          style={[
+            styles.particle,
+            {
+              backgroundColor: particle.color,
+              opacity: progress.interpolate({
+                inputRange: [0, 0.12, 0.7, 1],
+                outputRange: [0, 1, 1, 0],
+              }),
+              transform: [
+                {
+                  translateX: progress.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [0, particle.dx],
+                  }),
+                },
+                {
+                  translateY: progress.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [0, particle.dy],
+                  }),
+                },
+                {
+                  scale: progress.interpolate({
+                    inputRange: [0, 0.25, 1],
+                    outputRange: [0.4, 1, 0.5],
+                  }),
+                },
+              ],
+            },
+          ]}
+        />
+      ))}
+    </View>
+  );
+}
+
+const COUNTDOWN_TICK_MS = 1000;
+
+// A 3-2-1 beat between the sponsor ad and the next clue revealing.
+export function CountdownScreen({ onDone }: { onDone: () => void }) {
+  const [count, setCount] = useState(3);
+  const scale = useRef(new Animated.Value(0.6)).current;
+  const opacity = useRef(new Animated.Value(0)).current;
+  const reduceMotion = useReducedMotionPreference();
+
+  useEffect(() => {
+    if (reduceMotion) {
+      scale.setValue(1);
+      opacity.setValue(1);
+      return;
+    }
+    scale.setValue(0.6);
+    opacity.setValue(0);
+    Animated.parallel([
+      Animated.spring(scale, { toValue: 1, useNativeDriver: true, friction: 5 }),
+      Animated.timing(opacity, {
+        toValue: 1,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [count, reduceMotion, scale, opacity]);
+
+  useEffect(() => {
+    if (count <= 1) {
+      const finish = setTimeout(onDone, COUNTDOWN_TICK_MS);
+      return () => clearTimeout(finish);
+    }
+    const next = setTimeout(() => setCount((c) => c - 1), COUNTDOWN_TICK_MS);
+    return () => clearTimeout(next);
+  }, [count, onDone]);
+
+  return (
+    <View style={styles.countdownPage}>
+      <Text style={styles.countdownLabel}>Next discovery in</Text>
+      <Animated.Text
+        style={[styles.countdownNumber, { transform: [{ scale }], opacity }]}
+      >
+        {count}
+      </Animated.Text>
+    </View>
+  );
+}
 
 export function AdScreen({
   step,
@@ -831,6 +1015,73 @@ const styles = StyleSheet.create({
   buttonPressed: {
     opacity: 0.7,
     transform: [{ scale: 0.98 }],
+  },
+  celebratePage: {
+    flex: 1,
+    backgroundColor: colors.ink,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  celebrateCenter: {
+    alignItems: 'center',
+    paddingHorizontal: 32,
+  },
+  celebrateBadge: {
+    width: 68,
+    height: 68,
+    borderRadius: 24,
+    backgroundColor: colors.lime,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 20,
+  },
+  celebrateTitle: {
+    color: colors.white,
+    fontSize: 26,
+    lineHeight: 30,
+    fontWeight: '900',
+    letterSpacing: -0.5,
+    textAlign: 'center',
+  },
+  celebrateBody: {
+    color: 'rgba(255,255,255,0.62)',
+    fontSize: 14,
+    marginTop: 8,
+    textAlign: 'center',
+  },
+  burstOrigin: {
+    position: 'absolute',
+    width: 0,
+    height: 0,
+  },
+  particle: {
+    position: 'absolute',
+    width: 9,
+    height: 9,
+    borderRadius: 4.5,
+    left: -4.5,
+    top: -4.5,
+  },
+  countdownPage: {
+    flex: 1,
+    backgroundColor: colors.ink,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  countdownLabel: {
+    color: 'rgba(255,255,255,0.6)',
+    fontSize: 12,
+    fontWeight: '800',
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
+    marginBottom: 10,
+  },
+  countdownNumber: {
+    color: colors.lime,
+    fontSize: 96,
+    lineHeight: 100,
+    fontWeight: '900',
   },
   adPage: {
     flex: 1,

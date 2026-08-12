@@ -43,7 +43,8 @@
         {
           "locationWhenInUsePermission": "Allow CLUTRL to share your location while a Live or Immersive hunt is active."
         }
-      ]
+      ],
+      "expo-audio"
     ]
   }
 }

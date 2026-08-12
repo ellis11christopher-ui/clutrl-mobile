@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import { useAudioPlayer } from 'expo-audio';
 import { CameraView, useCameraPermissions, type BarcodeScanningResult } from 'expo-camera';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -46,15 +47,18 @@ function useReducedMotionPreference(): boolean {
 }
 
 const CELEBRATION_DURATION_MS = 2000;
+const crowdCheerSound = require('../../assets/audio/crowd-cheer.mp3');
 
-// Plays for a fixed 2 seconds after a confirmed scan, before the sponsor ad.
-// No audio yet — a real crowd-cheer sound file would need to be dropped into
-// assets/audio and wired through expo-av; until then this leans on motion
-// (simulated fireworks) and haptics to sell the moment.
+// Plays for a fixed 2 seconds after a confirmed scan, before the sponsor ad:
+// a real crowd-cheer sound, simulated fireworks, and a couple of haptic
+// pulses to sell the moment.
 export function CelebrationScreen({ onDone }: { onDone: () => void }) {
   const reduceMotion = useReducedMotionPreference();
+  const cheerPlayer = useAudioPlayer(crowdCheerSound);
 
   useEffect(() => {
+    cheerPlayer.seekTo(0);
+    cheerPlayer.play();
     void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     const secondPulse = setTimeout(() => {
       void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -63,8 +67,9 @@ export function CelebrationScreen({ onDone }: { onDone: () => void }) {
     return () => {
       clearTimeout(secondPulse);
       clearTimeout(done);
+      cheerPlayer.pause();
     };
-  }, [onDone]);
+  }, [onDone, cheerPlayer]);
 
   const bursts: { left: `${number}%`; top: `${number}%`; delay: number; colors: string[] }[] = [
     { left: '20%', top: '30%', delay: 0, colors: [colors.lime, colors.cyan] },

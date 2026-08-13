@@ -27,6 +27,14 @@ export type QuestVenue = {
   // returning them at all.
   lighting_requires_reservation: boolean;
   playable_until_local: string | null;
+  sunset_buffer_minutes: number | null;
+  /**
+   * When this venue stops being offered tonight, as an absolute timestamp
+   * computed from local sunset minus its buffer. Null when the venue has no
+   * sunset rule. Surfaced so the app can say "until 7:42 PM" rather than
+   * letting the venue silently vanish from the list later on.
+   */
+  closes_at: string | null;
   time_zone: string;
   verifying_authority: string | null;
   distance_meters: number;
@@ -117,6 +125,23 @@ export async function resolveChapterPlacement(
   });
   if (error) throw new Error(error.message);
   return data as ChapterPlacement;
+}
+
+/**
+ * Public URL for a chapter's prerecorded narration.
+ *
+ * Narration is stored in a Supabase Storage bucket rather than bundled: 22
+ * chapters of voice would bloat the app download for players who only ever
+ * run one Quest. Returns null when a chapter has no recording yet, which is
+ * the normal state while stories are still being written — the chapter falls
+ * back to on-screen story text.
+ */
+export function narrationUrl(narrationPath: string | null): string | null {
+  if (!narrationPath || !supabase) return null;
+  const { data } = supabase.storage
+    .from('quest-narration')
+    .getPublicUrl(narrationPath);
+  return data.publicUrl ?? null;
 }
 
 const venueTypeLabels: Record<VenueType, string> = {

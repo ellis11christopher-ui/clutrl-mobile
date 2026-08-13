@@ -46,6 +46,8 @@ export type Screen =
   | 'ar'
   | 'master'
   | 'save-progress'
+  | 'quest-venue'
+  | 'quest-chapter'
   | 'settings';
 
 export type Coordinates = {

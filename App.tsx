@@ -46,6 +46,11 @@ import {
   TrackingScreen,
 } from './src/screens/LiveScreens';
 import { SaveProgressScreen } from './src/screens/SaveProgressScreen';
+import {
+  QuestChapterScreen,
+  QuestVenueScreen,
+} from './src/screens/QuestScreens';
+import { narrationUrl } from './src/lib/quest';
 import { SettingsScreen } from './src/screens/SettingsScreen';
 import {
   loadSaveProgressDismissed,
@@ -115,6 +120,11 @@ function AppShell() {
   const [remoteMembership, setRemoteMembership] = useState<JoinHuntResult | null>(null);
   const [remoteItems, setRemoteItems] = useState<RemoteHuntItem[]>([]);
   const [remoteReward, setRemoteReward] = useState<ScanReward | null>(null);
+  // Which vetted venue this Quest is anchored to. Seeded from join_hunt on
+  // resume, then set when the player picks one.
+  const [questVenue, setQuestVenue] = useState<
+    JoinHuntResult['quest_venue'] | null
+  >(null);
 
   // A signed-in session with Supabase configured means real hunt data;
   // anything else (unconfigured, or the user chose the offline skip) keeps
@@ -178,6 +188,10 @@ function AppShell() {
       setScreen('countdown');
       return;
     }
+    if (destination === 'clue') {
+      setScreen(clueDestination());
+      return;
+    }
     if (destination === 'reward') {
       setScreen('finale');
       return;
@@ -193,8 +207,18 @@ function AppShell() {
     setScreen('ad');
   }
 
+  // Quest replaces the plain clue screen with its own chapter screen, and
+  // needs a vetted venue before any chapter can be placed. Everything else
+  // still goes to 'clue'.
+  const isQuest = remoteMode && remoteMembership?.format === 'quest';
+
+  function clueDestination(): Screen {
+    if (!isQuest) return 'clue';
+    return questVenue ? 'quest-chapter' : 'quest-venue';
+  }
+
   function afterCountdown() {
-    setScreen('clue');
+    setScreen(clueDestination());
   }
 
   function afterFinale() {
@@ -205,6 +229,7 @@ function AppShell() {
     if (remoteMode) {
       const result = await joinHunt(code);
       setRemoteMembership(result);
+      setQuestVenue(result.quest_venue ?? null);
       const items = await fetchCurrentItems();
       setRemoteItems(items);
       setJoined(true);
@@ -231,7 +256,7 @@ function AppShell() {
   }
 
   function continueHunt() {
-    setScreen('clue');
+    setScreen(clueDestination());
   }
 
   function completeLocalClue() {
@@ -364,6 +389,55 @@ function AppShell() {
             onSaveProgress={() => setScreen('save-progress')}
             onDismissSaveProgress={() => void dismissSaveProgress()}
             onNavigate={setScreen}
+          />
+        ) : null}
+
+        {screen === 'quest-venue' && remoteMembership ? (
+          <QuestVenueScreen
+            membershipId={remoteMembership.membership_id}
+            onAnchored={(venue) => {
+              setQuestVenue({
+                venue_id: venue.id,
+                name: venue.name,
+                latitude: venue.latitude,
+                longitude: venue.longitude,
+                play_radius_meters: venue.play_radius_meters,
+                newly_anchored: true,
+              });
+              setScreen('quest-chapter');
+            }}
+            onBack={() => setScreen('home')}
+          />
+        ) : null}
+
+        {screen === 'quest-chapter' &&
+        remoteMembership &&
+        questVenue &&
+        remoteCurrentItem &&
+        clue ? (
+          <QuestChapterScreen
+            membershipId={remoteMembership.membership_id}
+            itemId={remoteCurrentItem.id}
+            chapterNumber={remoteCurrentItem.position}
+            totalChapters={total}
+            title={clue.title}
+            storyText={remoteCurrentItem.story_text}
+            narrationUrl={narrationUrl(remoteCurrentItem.narration_path)}
+            slots={remoteCurrentItem.location_slots}
+            venueLatitude={questVenue.latitude}
+            venueLongitude={questVenue.longitude}
+            playRadiusMeters={questVenue.play_radius_meters}
+            existingPlacement={
+              remoteCurrentItem.placement_latitude != null &&
+              remoteCurrentItem.placement_longitude != null
+                ? {
+                    latitude: remoteCurrentItem.placement_latitude,
+                    longitude: remoteCurrentItem.placement_longitude,
+                  }
+                : null
+            }
+            onReadyToScan={() => setScreen('scanner')}
+            onBack={() => setScreen('home')}
           />
         ) : null}
 

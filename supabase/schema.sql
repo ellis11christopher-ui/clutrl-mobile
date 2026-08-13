@@ -126,6 +126,14 @@ create table public.quest_venues (
   playable_from_local time,
   playable_until_local time,
 
+  -- Stop offering this venue this many minutes before local sunset. NULL
+  -- means no sunset rule, which is only appropriate for reliably lit venues.
+  -- Preferred over a fixed playable_until_local, because a fixed time has to
+  -- be set for the darkest night of the year to be safe, and is then far too
+  -- strict in summer.
+  sunset_buffer_minutes integer
+    check (sunset_buffer_minutes is null or sunset_buffer_minutes between 0 and 240),
+
   -- IANA zone name, used to evaluate the cutoff against local wall-clock
   -- time. Deliberately has no default: a venue silently inheriting the wrong
   -- timezone would compute its cutoff hours off.
@@ -158,6 +166,7 @@ create table public.quest_venues (
   constraint quest_venues_dark_venues_require_cutoff check (
     (lighting_requires_reservation = false and lighting <> 'unlit')
     or playable_until_local is not null
+    or sunset_buffer_minutes is not null
   )
 );
 
@@ -533,6 +542,8 @@ declare
   v_hunt public.hunts;
   v_membership public.hunt_memberships;
   v_total_published integer;
+  v_venue public.quest_venues;
+  v_venue_json jsonb := null;
 begin
   if auth.uid() is null then
     raise exception 'Sign in before joining a hunt';
@@ -579,6 +590,26 @@ begin
   from public.hunt_items
   where hunt_id = v_hunt.id and published = true;
 
+  -- Resume information for an already-anchored Quest, so reopening the app
+  -- mid-quest goes straight back to the current chapter instead of asking
+  -- the player to choose a venue the quest cannot actually move to.
+  if v_membership.quest_venue_id is not null then
+    select * into v_venue
+    from public.quest_venues
+    where id = v_membership.quest_venue_id;
+
+    if found then
+      v_venue_json := jsonb_build_object(
+        'venue_id', v_venue.id,
+        'name', v_venue.name,
+        'latitude', v_venue.latitude,
+        'longitude', v_venue.longitude,
+        'play_radius_meters', v_venue.play_radius_meters,
+        'newly_anchored', false
+      );
+    end if;
+  end if;
+
   return jsonb_build_object(
     'membership_id', v_membership.id,
     'hunt_id', v_hunt.id,
@@ -586,7 +617,8 @@ begin
     'tier', v_hunt.tier,
     'format', v_hunt.format,
     'total_items', v_total_published,
-    'completed_at', v_membership.completed_at
+    'completed_at', v_membership.completed_at,
+    'quest_venue', v_venue_json
   );
 end;
 $$;
@@ -674,6 +706,66 @@ as $$
   );
 $$;
 
+create or replace function public.mod_360(x double precision)
+returns double precision
+language sql
+immutable
+parallel safe
+set search_path = ''
+as $$
+  select x - 360.0 * floor(x / 360.0);
+$$;
+
+-- Sunset in UTC for a coordinate on a given date, via the standard NOAA
+-- sunrise/sunset approximation. Returns NULL where the sun does not set that
+-- day (polar summer) or does not rise (polar winter); callers must treat NULL
+-- as "not playable".
+create or replace function public.solar_sunset_utc(
+  p_latitude double precision,
+  p_longitude double precision,
+  p_on_date date
+)
+returns timestamptz
+language plpgsql
+immutable
+parallel safe
+set search_path = ''
+as $$
+declare
+  n double precision;
+  j_star double precision;
+  m double precision;
+  c double precision;
+  lambda double precision;
+  j_transit double precision;
+  sin_declination double precision;
+  cos_hour_angle double precision;
+  hour_angle double precision;
+  j_set double precision;
+begin
+  n := (p_on_date - date '2000-01-01') + 0.0008;
+  j_star := n - p_longitude / 360.0;
+  m := public.mod_360(357.5291 + 0.98560028 * j_star);
+  c := 1.9148 * sin(radians(m))
+     + 0.0200 * sin(radians(2 * m))
+     + 0.0003 * sin(radians(3 * m));
+  lambda := public.mod_360(m + c + 180 + 102.9372);
+  j_transit := 2451545.0 + j_star
+             + 0.0053 * sin(radians(m))
+             - 0.0069 * sin(radians(2 * lambda));
+  sin_declination := sin(radians(lambda)) * sin(radians(23.44));
+  -- -0.833 deg accounts for refraction and the solar disc's radius.
+  cos_hour_angle := (sin(radians(-0.833)) - sin(radians(p_latitude)) * sin_declination)
+                  / (cos(radians(p_latitude)) * cos(asin(sin_declination)));
+  if cos_hour_angle > 1.0 or cos_hour_angle < -1.0 then
+    return null;
+  end if;
+  hour_angle := degrees(acos(cos_hour_angle));
+  j_set := j_transit + hour_angle / 360.0;
+  return to_timestamp((j_set - 2440587.5) * 86400.0);
+end;
+$$;
+
 -- Verified, lit, active venues near a player, nearest first. The bounding-box
 -- predicates exist so the partial index can do the heavy filtering before the
 -- trigonometry runs.
@@ -695,6 +787,8 @@ returns table (
   lighting public.lighting_status,
   lighting_requires_reservation boolean,
   playable_until_local time,
+  sunset_buffer_minutes integer,
+  closes_at timestamptz,
   time_zone text,
   verifying_authority text,
   distance_meters double precision
@@ -716,6 +810,13 @@ as $$
     v.lighting,
     v.lighting_requires_reservation,
     v.playable_until_local,
+    v.sunset_buffer_minutes,
+    case
+      when v.sunset_buffer_minutes is null then null
+      else public.solar_sunset_utc(
+             v.latitude, v.longitude, (now() at time zone v.time_zone)::date
+           ) - make_interval(mins => v.sunset_buffer_minutes)
+    end,
     v.time_zone,
     v.verifying_authority,
     public.haversine_meters(p_latitude, p_longitude, v.latitude, v.longitude)
@@ -731,6 +832,14 @@ as $$
     and (
       v.playable_until_local is null
       or (now() at time zone v.time_zone)::time < v.playable_until_local
+    )
+    -- Sunset-relative window. Fails closed: a NULL sunset (polar day/night)
+    -- makes the comparison NULL and drops the venue, the safe direction.
+    and (
+      v.sunset_buffer_minutes is null
+      or now() < public.solar_sunset_utc(
+                   v.latitude, v.longitude, (now() at time zone v.time_zone)::date
+                 ) - make_interval(mins => v.sunset_buffer_minutes)
     )
     and v.latitude
       between p_latitude - (p_radius_meters / 111320.0)

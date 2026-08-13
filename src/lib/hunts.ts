@@ -9,6 +9,20 @@ export type JoinHuntResult = {
   format: HuntFormat;
   total_items: number;
   completed_at: string | null;
+  /**
+   * Set when a Quest is already anchored to a venue, so reopening the app
+   * mid-quest resumes at the current chapter instead of re-showing the venue
+   * picker for a quest that cannot move. Null for unanchored or non-Quest
+   * hunts.
+   */
+  quest_venue: {
+    venue_id: string;
+    name: string;
+    latitude: number;
+    longitude: number;
+    play_radius_meters: number;
+    newly_anchored: boolean;
+  } | null;
 };
 
 export async function joinHunt(

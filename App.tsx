@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
@@ -45,7 +45,12 @@ import {
   MasterScreen,
   TrackingScreen,
 } from './src/screens/LiveScreens';
+import { SaveProgressScreen } from './src/screens/SaveProgressScreen';
 import { SettingsScreen } from './src/screens/SettingsScreen';
+import {
+  loadSaveProgressDismissed,
+  markSaveProgressDismissed,
+} from './src/lib/saveProgressPrompt';
 
 function clueEyebrow(kind: ClueKind): string {
   switch (kind) {
@@ -94,8 +99,9 @@ export default function App() {
 }
 
 function AppShell() {
-  const { configured, loading, session } = useAuth();
+  const { configured, loading, session, isAnonymous } = useAuth();
   const [authSkipped, setAuthSkipped] = useState(false);
+  const [saveProgressDismissed, setSaveProgressDismissed] = useState(true);
   const [screen, setScreen] = useState<Screen>('home');
   const [tier, setTier] = useState<HuntTier>('immersive');
   const [joined, setJoined] = useState(false);
@@ -114,6 +120,23 @@ function AppShell() {
   // anything else (unconfigured, or the user chose the offline skip) keeps
   // running on the local demoHunt state exactly as before.
   const remoteMode = configured && Boolean(session);
+
+  // Starts hidden and only appears once the stored dismissal has been read,
+  // so a player who already said "Not now" never sees it flash on launch.
+  useEffect(() => {
+    let active = true;
+    void loadSaveProgressDismissed().then((dismissed) => {
+      if (active) setSaveProgressDismissed(dismissed);
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  async function dismissSaveProgress() {
+    setSaveProgressDismissed(true);
+    await markSaveProgressDismissed();
+  }
 
   const localClue = demoHunt.clues[currentIndex] ?? demoHunt.clues[0]!;
   const remoteCurrentItem = remoteItems.find((item) => !item.completed) ?? null;
@@ -332,10 +355,27 @@ function AppShell() {
             progress={completedCount}
             total={total}
             joinCodeDefault={remoteMode ? '' : demoHunt.joinCode}
+            showSaveProgress={
+              remoteMode && isAnonymous && !saveProgressDismissed
+            }
             onJoin={startHunt}
             onScanToJoin={() => setScreen('joinScan')}
             onContinue={continueHunt}
+            onSaveProgress={() => setScreen('save-progress')}
+            onDismissSaveProgress={() => void dismissSaveProgress()}
             onNavigate={setScreen}
+          />
+        ) : null}
+
+        {screen === 'save-progress' ? (
+          <SaveProgressScreen
+            progress={completedCount}
+            total={total}
+            onDone={() => setScreen('home')}
+            onDismiss={() => {
+              void dismissSaveProgress();
+              setScreen('home');
+            }}
           />
         ) : null}
 

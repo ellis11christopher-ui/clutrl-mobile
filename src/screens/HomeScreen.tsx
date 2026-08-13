@@ -33,9 +33,12 @@ export function HomeScreen({
   progress,
   total,
   joinCodeDefault,
+  showSaveProgress = false,
   onJoin,
   onScanToJoin,
   onContinue,
+  onSaveProgress,
+  onDismissSaveProgress,
   onNavigate,
 }: {
   featuredHunt: Hunt;
@@ -47,9 +50,12 @@ export function HomeScreen({
   progress: number;
   total: number;
   joinCodeDefault: string;
+  showSaveProgress?: boolean;
   onJoin: (code: string) => Promise<void>;
   onScanToJoin: () => void;
   onContinue: () => void;
+  onSaveProgress?: () => void;
+  onDismissSaveProgress?: () => void;
   onNavigate: (screen: Screen) => void;
 }) {
   const [joinCode, setJoinCode] = useState(joinCodeDefault);
@@ -97,6 +103,15 @@ export function HomeScreen({
             impossible-to-forget finishes.
           </Text>
         </View>
+
+        {showSaveProgress && onSaveProgress ? (
+          <SaveProgressBanner
+            progress={progress}
+            total={total}
+            onPress={onSaveProgress}
+            onDismiss={onDismissSaveProgress}
+          />
+        ) : null}
 
         {joined ? (
           <ActiveHuntCard
@@ -201,6 +216,48 @@ function JoinCard({
         </Pressable>
       </View>
       {error ? <Text style={styles.joinError}>{error}</Text> : null}
+    </View>
+  );
+}
+
+// Shown only to guests who actually have something to lose. It states the
+// real risk plainly instead of dangling a generic "create an account" — and
+// it can be dismissed for good, because a player mid-hunt outdoors does not
+// need to be nagged about account hygiene.
+function SaveProgressBanner({
+  progress,
+  total,
+  onPress,
+  onDismiss,
+}: {
+  progress: number;
+  total: number;
+  onPress: () => void;
+  onDismiss?: () => void;
+}) {
+  return (
+    <View style={styles.saveCard}>
+      <View style={styles.saveIcon}>
+        <Ionicons name="shield-checkmark-outline" size={20} color={colors.ink} />
+      </View>
+      <View style={styles.saveCopy}>
+        <Text style={styles.saveTitle}>Save your progress</Text>
+        <Text style={styles.saveBody}>
+          {progress > 0
+            ? `You’re playing as a guest. Add an email to keep your ${progress} of ${total}.`
+            : 'You’re playing as a guest. Add an email so your hunt survives this device.'}
+        </Text>
+        <View style={styles.saveActions}>
+          <Pressable onPress={onPress} accessibilityRole="button">
+            <Text style={styles.saveLink}>Add email</Text>
+          </Pressable>
+          {onDismiss ? (
+            <Pressable onPress={onDismiss} accessibilityRole="button">
+              <Text style={styles.saveDismiss}>Not now</Text>
+            </Pressable>
+          ) : null}
+        </View>
+      </View>
     </View>
   );
 }
@@ -486,6 +543,54 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
+  },
+  saveCard: {
+    flexDirection: 'row',
+    gap: 12,
+    backgroundColor: colors.sand,
+    borderRadius: radii.lg,
+    borderWidth: 1,
+    borderColor: colors.line,
+    padding: 16,
+    marginBottom: 16,
+  },
+  saveIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.lime,
+  },
+  saveCopy: {
+    flex: 1,
+  },
+  saveTitle: {
+    color: colors.ink,
+    fontSize: 15,
+    fontWeight: '900',
+  },
+  saveBody: {
+    marginTop: 4,
+    color: colors.muted,
+    fontSize: 13,
+    lineHeight: 19,
+  },
+  saveActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 18,
+    marginTop: 10,
+  },
+  saveLink: {
+    color: colors.ink,
+    fontSize: 13,
+    fontWeight: '900',
+    textDecorationLine: 'underline',
+  },
+  saveDismiss: {
+    color: colors.muted,
+    fontSize: 13,
   },
   activeTitle: {
     color: colors.white,

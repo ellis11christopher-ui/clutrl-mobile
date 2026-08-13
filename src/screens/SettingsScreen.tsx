@@ -88,6 +88,25 @@ export function SettingsScreen({
           </View>
         ) : null}
 
+        {configured && session?.user.is_anonymous ? (
+          <Pressable
+            onPress={() => onNavigate('save-progress')}
+            style={styles.saveProgressCard}
+            accessibilityRole="button"
+          >
+            <View style={styles.saveProgressIcon}>
+              <Ionicons name="shield-checkmark-outline" size={20} color={colors.ink} />
+            </View>
+            <View style={styles.saveProgressCopy}>
+              <Text style={styles.saveProgressTitle}>Save your progress</Text>
+              <Text style={styles.saveProgressBody}>
+                Guest progress lives only on this device. Add an email to keep it.
+              </Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={colors.muted} />
+          </Pressable>
+        ) : null}
+
         <View style={styles.tierList}>
           {tiers.map((item, index) => {
             const copy = tierCopy[item];
@@ -246,6 +265,39 @@ const styles = StyleSheet.create({
     color: colors.ink,
     fontSize: 11,
     fontWeight: '800',
+  },
+  saveProgressCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    backgroundColor: colors.sand,
+    borderRadius: radii.lg,
+    borderWidth: 1,
+    borderColor: colors.line,
+    padding: 14,
+    marginBottom: 18,
+  },
+  saveProgressIcon: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.lime,
+  },
+  saveProgressCopy: {
+    flex: 1,
+  },
+  saveProgressTitle: {
+    color: colors.ink,
+    fontSize: 14,
+    fontWeight: '900',
+  },
+  saveProgressBody: {
+    marginTop: 3,
+    color: colors.muted,
+    fontSize: 12,
+    lineHeight: 17,
   },
   tierList: {
     gap: 10,

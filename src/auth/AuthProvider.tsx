@@ -19,8 +19,10 @@ type AuthState = {
   loading: boolean;
   session: Session | null;
   profile: Profile | null;
+  isAnonymous: boolean;
   signInAsGuest: (displayName: string) => Promise<void>;
   signInWithEmail: (email: string) => Promise<void>;
+  upgradeToEmail: (email: string) => Promise<void>;
   signOut: () => Promise<void>;
 };
 
@@ -111,6 +113,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (error) throw error;
   }
 
+  // Attaches an email identity to the CURRENT anonymous user rather than
+  // creating a new account, so the user id — and with it every
+  // hunt_membership, item_completion, and quest placement already earned —
+  // survives the upgrade. That distinction is the whole point: a 22-chapter
+  // Quest represents weeks of play, and signing in fresh would strand it.
+  //
+  // Supabase emails a confirmation link; is_anonymous stays true until the
+  // player clicks it, so callers should treat this as "check your inbox",
+  // not "done".
+  async function upgradeToEmail(email: string) {
+    if (!supabase) {
+      throw new Error(
+        'Supabase is not configured. Set EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY.',
+      );
+    }
+    const trimmed = email.trim();
+    if (!trimmed) throw new Error('Enter an email address to continue.');
+    if (!session) throw new Error('Sign in before saving your progress.');
+
+    const { error } = await supabase.auth.updateUser({ email: trimmed });
+    if (error) throw error;
+  }
+
   async function signOut() {
     if (!supabase) return;
     await supabase.auth.signOut();
@@ -123,8 +148,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       loading,
       session,
       profile,
+      isAnonymous: Boolean(session?.user?.is_anonymous),
       signInAsGuest,
       signInWithEmail,
+      upgradeToEmail,
       signOut,
     }),
     [loading, session, profile],

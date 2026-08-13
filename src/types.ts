@@ -45,6 +45,7 @@ export type Screen =
   | 'chat'
   | 'ar'
   | 'master'
+  | 'save-progress'
   | 'settings';
 
 export type Coordinates = {

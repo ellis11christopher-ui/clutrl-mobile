@@ -64,10 +64,12 @@ export function CelebrationScreen({ onDone }: { onDone: () => void }) {
       void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     }, 450);
     const done = setTimeout(onDone, CELEBRATION_DURATION_MS);
+    // No manual pause/release here: useAudioPlayer already tears the native
+    // player down on unmount, and calling .pause() again in this cleanup
+    // races that teardown and crashes ("shared object already released").
     return () => {
       clearTimeout(secondPulse);
       clearTimeout(done);
-      cheerPlayer.pause();
     };
   }, [onDone, cheerPlayer]);
 

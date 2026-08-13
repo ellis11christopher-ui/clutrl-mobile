@@ -35,7 +35,7 @@ export function BrandLockup({ inverse = false }: { inverse?: boolean }) {
     <View style={styles.brandLockup}>
       <BrandMark inverse={inverse} />
       <Text style={[styles.brandName, inverse && styles.brandNameInverse]}>
-        CLUTRL
+        CLU<Text style={styles.brandSlash}>/</Text>TRL
       </Text>
     </View>
   );
@@ -330,6 +330,9 @@ const styles = StyleSheet.create({
   },
   brandNameInverse: {
     color: colors.white,
+  },
+  brandSlash: {
+    color: colors.lime,
   },
   pill: {
     alignSelf: 'flex-start',

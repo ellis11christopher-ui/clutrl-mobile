@@ -1,5 +1,5 @@
 import { supabase } from './supabase';
-import type { ClueKind, HuntFormat, HuntTier } from '../types';
+import type { ClueKind, HuntFormat, HuntTier, LocationSlot } from '../types';
 
 export type JoinHuntResult = {
   membership_id: string;
@@ -43,6 +43,20 @@ export type RemoteHuntItem = {
   ar_heading_degrees: number | null;
   completed: boolean;
   completed_at: string | null;
+
+  // CLU/TRL Quest chapter content. Null on every other format.
+  story_text: string | null;
+  narration_path: string | null;
+  narration_duration_ms: number | null;
+  location_slots: LocationSlot[];
+  ar_character_key: string | null;
+
+  // This player's persisted placement for the chapter, if one has been
+  // resolved yet. Non-null means the red pin is already fixed and must not
+  // be recomputed — see resolveChapterPlacement in ./quest.
+  placement_latitude: number | null;
+  placement_longitude: number | null;
+  placement_slots: Partial<Record<LocationSlot, string>> | null;
 };
 
 export async function fetchCurrentItems(): Promise<RemoteHuntItem[]> {

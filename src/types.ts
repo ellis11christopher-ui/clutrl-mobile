@@ -9,6 +9,27 @@ export type ClueKind = 'text' | 'photo' | 'video' | 'ar';
 // format 'live' = the short single-venue event sub-brand) — don't conflate
 // them.
 export type HuntFormat = 'pista' | 'hare_hounds' | 'quest' | 'ar' | 'live';
+
+// CLU/TRL Quest venue registry (see supabase/schema.sql). Quest play only
+// ever happens inside vetted, municipally lighting-verified public
+// recreational land — never on arbitrary streets.
+export type VenueType =
+  | 'public_park'
+  | 'municipal_trail'
+  | 'city_soccer_field'
+  | 'public_outdoor_arena';
+
+export type LightingStatus = 'lit' | 'partially_lit' | 'unlit' | 'unknown';
+
+// The adjustable placement slots a Quest chapter can ask the app to resolve
+// against the player's surroundings. Their text is per-player and per-venue,
+// which is exactly why it can't be prerecorded with the story narration.
+export type LocationSlot =
+  | 'LOCAL_LANDMARK'
+  | 'NEARBY_OPEN_SPACE'
+  | 'VISIBLE_SIGN_OR_COLOR'
+  | 'SAFE_WALKING_DIRECTION'
+  | 'OBJECT_OR_SURFACE_TYPE';
 export type Screen =
   | 'auth'
   | 'home'

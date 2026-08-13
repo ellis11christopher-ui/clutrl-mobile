@@ -7,6 +7,7 @@ export type Screen =
   | 'celebration'
   | 'ad'
   | 'countdown'
+  | 'finale'
   | 'clue'
   | 'scanner'
   | 'reward'

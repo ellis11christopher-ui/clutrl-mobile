@@ -173,6 +173,84 @@ function FireworkBurst({
   );
 }
 
+const FINALE_DURATION_MS = 15000;
+const FINALE_BURST_INTERVAL_MS = 650;
+const finishingSongSound = require('../../assets/audio/finishing-song.mp3');
+
+const FINALE_HOTSPOTS: { left: `${number}%`; top: `${number}%` }[] = [
+  { left: '18%', top: '26%' },
+  { left: '78%', top: '20%' },
+  { left: '50%', top: '40%' },
+  { left: '30%', top: '58%' },
+  { left: '70%', top: '62%' },
+  { left: '46%', top: '72%' },
+  { left: '14%', top: '46%' },
+  { left: '84%', top: '44%' },
+];
+
+function buildFinaleBursts(): {
+  left: `${number}%`;
+  top: `${number}%`;
+  delay: number;
+  colors: string[];
+}[] {
+  const colorSets = [
+    [colors.lime, colors.cyan],
+    [colors.coral, colors.lime],
+    [colors.cyan, colors.coral],
+    [colors.lime, colors.white],
+    [colors.coral, colors.cyan],
+  ];
+  const count = Math.floor(FINALE_DURATION_MS / FINALE_BURST_INTERVAL_MS);
+  return Array.from({ length: count }, (_, i) => ({
+    ...FINALE_HOTSPOTS[i % FINALE_HOTSPOTS.length]!,
+    delay: i * FINALE_BURST_INTERVAL_MS,
+    colors: colorSets[i % colorSets.length]!,
+  }));
+}
+
+// Plays once, for a full 15 seconds, after the sponsor ad on finishing the
+// hunt — right before the reward screen reveals. Same firework mechanic as
+// CelebrationScreen, just a much bigger, sustained show with the finishing
+// song instead of the per-item crowd cheer.
+export function FinaleScreen({ onDone }: { onDone: () => void }) {
+  const reduceMotion = useReducedMotionPreference();
+  const songPlayer = useAudioPlayer(finishingSongSound);
+  const [bursts] = useState(buildFinaleBursts);
+
+  useEffect(() => {
+    songPlayer.seekTo(0);
+    songPlayer.play();
+    const pulseTimers = [0, 3000, 7000, 11000].map((delay) =>
+      setTimeout(() => {
+        void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      }, delay),
+    );
+    const done = setTimeout(onDone, FINALE_DURATION_MS);
+    // Same reasoning as CelebrationScreen: no manual pause here, since
+    // useAudioPlayer already releases the native player on unmount.
+    return () => {
+      pulseTimers.forEach(clearTimeout);
+      clearTimeout(done);
+    };
+  }, [onDone, songPlayer]);
+
+  return (
+    <View style={styles.celebratePage}>
+      {!reduceMotion
+        ? bursts.map((burst, index) => <FireworkBurst key={index} {...burst} />)
+        : null}
+      <View style={styles.celebrateCenter}>
+        <View style={styles.celebrateBadge}>
+          <Ionicons name="trophy" size={32} color={colors.ink} />
+        </View>
+        <Text style={styles.celebrateTitle}>Hunt complete!</Text>
+        <Text style={styles.celebrateBody}>Every discovery found. Your reward is next.</Text>
+      </View>
+    </View>
+  );
+}
+
 const COUNTDOWN_TICK_MS = 1000;
 
 // A 3-2-1 beat between the sponsor ad and the next clue revealing.

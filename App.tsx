@@ -28,6 +28,7 @@ import {
   CelebrationScreen,
   ClueScreen,
   CountdownScreen,
+  FinaleScreen,
   RewardScreen,
   ScannerScreen,
 } from './src/screens/HuntScreens';
@@ -128,8 +129,8 @@ function AppShell() {
   }
 
   // A confirmed scan always celebrates first, then runs the normal ad queue,
-  // then (only if there's a next clue waiting) a 3-2-1 countdown before it
-  // reveals. Finishing the hunt skips straight to the reward screen instead.
+  // then either a 3-2-1 countdown (more clues waiting) or the 15-second
+  // finale (hunt just finished) before landing on the next screen.
   function celebrateThenAds(queue: AdStep[], destination: Screen) {
     setCountdownNext(true);
     setAdQueue(queue);
@@ -138,7 +139,15 @@ function AppShell() {
   }
 
   function proceedAfterAds(destination: Screen) {
-    setScreen(destination === 'clue' && countdownNext ? 'countdown' : destination);
+    if (destination === 'clue' && countdownNext) {
+      setScreen('countdown');
+      return;
+    }
+    if (destination === 'reward') {
+      setScreen('finale');
+      return;
+    }
+    setScreen(destination);
   }
 
   function afterCelebration() {
@@ -151,6 +160,10 @@ function AppShell() {
 
   function afterCountdown() {
     setScreen('clue');
+  }
+
+  function afterFinale() {
+    setScreen('reward');
   }
 
   async function startHunt(code: string) {
@@ -266,7 +279,8 @@ function AppShell() {
     screen === 'scanner' ||
     screen === 'ar' ||
     screen === 'celebration' ||
-    screen === 'countdown';
+    screen === 'countdown' ||
+    screen === 'finale';
   const needsAuth = configured && !loading && !session && !authSkipped;
 
   if (configured && loading) {
@@ -325,6 +339,8 @@ function AppShell() {
         {screen === 'countdown' ? (
           <CountdownScreen onDone={afterCountdown} />
         ) : null}
+
+        {screen === 'finale' ? <FinaleScreen onDone={afterFinale} /> : null}
 
         {screen === 'clue' && clue ? (
           <ClueScreen

@@ -1,11 +1,12 @@
 import { supabase } from './supabase';
-import type { ClueKind, HuntTier } from '../types';
+import type { ClueKind, HuntFormat, HuntTier } from '../types';
 
 export type JoinHuntResult = {
   membership_id: string;
   hunt_id: string;
   hunt_name: string;
   tier: HuntTier;
+  format: HuntFormat;
   total_items: number;
   completed_at: string | null;
 };

@@ -287,6 +287,33 @@
   @media (max-width: 900px) { .steps { grid-template-columns: 1fr 1fr; } }
   @media (max-width: 560px) { .steps { grid-template-columns: 1fr; } }
 
+  /* ---------- Game formats ---------- */
+  .formats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+  .format-card {
+    --c-size: 22px; --c-w: 2.5px; --c-inset: -1px;
+    position: relative;
+    background: var(--white);
+    border-radius: var(--r-lg);
+    padding: 28px 22px 26px;
+    transition: transform .5s var(--ease);
+  }
+  .format-card:hover { transform: translateY(-6px); }
+  .format-tag {
+    display: inline-block;
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 11px;
+    letter-spacing: .06em;
+    color: var(--ink);
+    padding: 5px 10px;
+    border-radius: 999px;
+    margin-bottom: 18px;
+  }
+  .format-card h3 { font-size: 19px; letter-spacing: -0.01em; margin-bottom: 10px; }
+  .format-card p { font-size: 14px; line-height: 1.55; color: var(--ink-55); }
+  @media (max-width: 900px) { .formats { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 560px) { .formats { grid-template-columns: 1fr; } }
+
   /* ---------- Results ---------- */
   .results-top { display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 24px; margin-bottom: 56px; }
   .live-badge {
@@ -388,6 +415,7 @@
     </a>
     <div class="nav-links">
       <a href="#how">How it works</a>
+      <a href="#formats">Formats</a>
       <a href="#results">Results</a>
       <a href="#download" class="btn btn-lime nav-cta">Get the app</a>
     </div>
@@ -476,6 +504,49 @@
           <div class="step-kicker">04</div>
           <h3>Claim your reward</h3>
           <p>Finish the trail and unlock a single-use reward code, issued only to teams who actually completed it.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- GAME FORMATS -->
+  <section id="formats" class="light section-pad">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <span class="eyebrow">Game formats</span>
+        <h2>Five ways to play CLU/TRL.</h2>
+        <p>Every hunt runs one of five formats. An organizer picks the format when they build the hunt — hunters just join and play.</p>
+      </div>
+      <div class="formats">
+        <div class="format-card reveal scan-frame" style="--c-color:var(--lime);">
+          <div class="corners"><div class="corner tl"></div><div class="corner tr"></div><div class="corner bl"></div><div class="corner br"></div></div>
+          <span class="format-tag" style="background:var(--lime);">PISTA</span>
+          <h3>CLU/TRL Pista</h3>
+          <p>Checkpoint- and location-based clue trails. Every hunter finds the same targets in the same fixed order, clue one to the finish.</p>
+        </div>
+        <div class="format-card reveal scan-frame" style="--c-color:var(--coral);">
+          <div class="corners"><div class="corner tl"></div><div class="corner tr"></div><div class="corner bl"></div><div class="corner br"></div></div>
+          <span class="format-tag" style="background:var(--coral);">HARE &amp; HOUNDS</span>
+          <h3>CLU/TRL Hare &amp; Hounds</h3>
+          <p>Live team pursuit. Each hunter gets their own randomized order over the same targets, so nobody can just tail whoever finds the next one first.</p>
+        </div>
+        <div class="format-card reveal scan-frame" style="--c-color:var(--cyan);">
+          <div class="corners"><div class="corner tl"></div><div class="corner tr"></div><div class="corner bl"></div><div class="corner br"></div></div>
+          <span class="format-tag" style="background:var(--cyan);">QUEST</span>
+          <h3>CLU/TRL Quest</h3>
+          <p>Story-driven adventures. Finding each target doesn't just confirm a checkpoint — it unlocks the next chapter of the story leading you to the one after.</p>
+        </div>
+        <div class="format-card reveal scan-frame" style="--c-color:var(--lime-deep);">
+          <div class="corners"><div class="corner tl"></div><div class="corner tr"></div><div class="corner bl"></div><div class="corner br"></div></div>
+          <span class="format-tag" style="background:var(--lime-deep);">AR</span>
+          <h3>CLU/TRL AR</h3>
+          <p>Augmented-reality hunts. Every target lives entirely in AR — camera up, and randomized per hunter, same anti-follow mechanic as Hare &amp; Hounds.</p>
+        </div>
+        <div class="format-card reveal scan-frame" style="--c-color:var(--coral);">
+          <div class="corners"><div class="corner tl"></div><div class="corner tr"></div><div class="corner bl"></div><div class="corner br"></div></div>
+          <span class="format-tag" style="background:var(--coral);">LIVE</span>
+          <h3>CLU/TRL Live</h3>
+          <p>Built for festivals, conferences, and community events — one venue, one short window (think 60 minutes), randomized per hunter so a packed crowd never bottlenecks on one target.</p>
         </div>
       </div>
     </div>

@@ -784,6 +784,186 @@ export function ScannerScreen({
   );
 }
 
+// A lightweight sibling of ScannerScreen for joining a hunt by QR instead of
+// typing its code — no clue/target context, since nothing's been joined yet.
+// A hunt's join QR just encodes its plain join code (the same text a hunter
+// could type by hand), so this hands off to the same onScan(code) path
+// HomeScreen's manual code entry already uses.
+export function JoinScannerScreen({
+  onBack,
+  onScan,
+}: {
+  onBack: () => void;
+  onScan: (rawValue: string) => Promise<void>;
+}) {
+  const [permission, requestPermission] = useCameraPermissions();
+  const [locked, setLocked] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [manualValue, setManualValue] = useState('');
+
+  async function handleScan(rawValue: string) {
+    if (locked || submitting) return;
+    setSubmitting(true);
+    try {
+      await onScan(rawValue);
+      setLocked(true);
+      setError(null);
+      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not join that hunt.');
+      void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  function handleBarcode(result: BarcodeScanningResult) {
+    void handleScan(result.data);
+  }
+
+  function submitManualCode() {
+    if (!manualValue.trim()) return;
+    void handleScan(manualValue.trim());
+  }
+
+  if (!permission) {
+    return (
+      <View style={styles.permissionPage}>
+        <Text style={styles.permissionTitle}>Opening the camera…</Text>
+      </View>
+    );
+  }
+
+  if (!permission.granted) {
+    return (
+      <View style={styles.permissionPage}>
+        <View style={styles.permissionIcon}>
+          <Ionicons name="camera-outline" size={32} color={colors.ink} />
+        </View>
+        <Text style={styles.permissionTitle}>Camera access is essential</Text>
+        <Text style={styles.permissionBody}>
+          Scan a hunt's join QR to hop in without typing its code.
+        </Text>
+        {error ? <Text style={styles.permissionError}>{error}</Text> : null}
+        <PrimaryButton
+          label="Allow camera access"
+          icon="camera"
+          variant="lime"
+          onPress={requestPermission}
+          style={styles.permissionButton}
+        />
+        <PrimaryButton
+          label="Go back"
+          variant="outline"
+          onPress={onBack}
+          style={styles.permissionButton}
+        />
+        <Text style={styles.permissionDivider}>
+          Camera unavailable or denied? Type the code instead.
+        </Text>
+        <View style={styles.manualRow}>
+          <TextInput
+            value={manualValue}
+            onChangeText={setManualValue}
+            placeholder="Enter the hunt code"
+            placeholderTextColor="rgba(255,255,255,0.5)"
+            autoCapitalize="characters"
+            autoCorrect={false}
+            editable={!submitting}
+            style={styles.manualInput}
+            returnKeyType="go"
+            onSubmitEditing={submitManualCode}
+          />
+          <Pressable
+            style={({ pressed }) => [
+              styles.manualSubmit,
+              pressed && styles.buttonPressed,
+            ]}
+            onPress={submitManualCode}
+            disabled={submitting}
+            accessibilityRole="button"
+          >
+            {submitting ? (
+              <ActivityIndicator size="small" color={colors.ink} />
+            ) : (
+              <Ionicons name="arrow-forward" size={18} color={colors.ink} />
+            )}
+          </Pressable>
+        </View>
+      </View>
+    );
+  }
+
+  return (
+    <View style={styles.cameraPage}>
+      <CameraView
+        style={StyleSheet.absoluteFill}
+        facing="back"
+        barcodeScannerSettings={{ barcodeTypes: ['qr'] }}
+        onBarcodeScanned={locked || submitting ? undefined : handleBarcode}
+      />
+      <View style={styles.cameraShadeTop} />
+      <View style={styles.cameraHeader}>
+        <IconButton icon="close" onPress={onBack} inverse />
+        <View style={styles.cameraTitleWrap}>
+          <Text style={styles.cameraTitle}>Scan to join</Text>
+          <Text style={styles.cameraSubtitle}>Align the hunt's join QR in the frame</Text>
+        </View>
+      </View>
+
+      <View style={styles.scanArea}>
+        <View style={styles.scanFrame}>
+          <View style={[styles.scanCorner, styles.scanCornerTL]} />
+          <View style={[styles.scanCorner, styles.scanCornerTR]} />
+          <View style={[styles.scanCorner, styles.scanCornerBL]} />
+          <View style={[styles.scanCorner, styles.scanCornerBR]} />
+          <View style={styles.scanLine} />
+        </View>
+        {submitting ? (
+          <View style={styles.scanBusy}>
+            <ActivityIndicator color={colors.white} />
+          </View>
+        ) : null}
+        {error ? (
+          <View style={styles.scanError}>
+            <Ionicons name="alert-circle" size={18} color={colors.white} />
+            <Text style={styles.scanErrorText}>{error}</Text>
+          </View>
+        ) : null}
+      </View>
+
+      <View style={styles.cameraFooter}>
+        <View style={styles.manualRow}>
+          <TextInput
+            value={manualValue}
+            onChangeText={setManualValue}
+            placeholder="Can't scan? Type the hunt code"
+            placeholderTextColor="rgba(255,255,255,0.5)"
+            autoCapitalize="characters"
+            autoCorrect={false}
+            editable={!submitting}
+            style={styles.manualInput}
+            returnKeyType="go"
+            onSubmitEditing={submitManualCode}
+          />
+          <Pressable
+            style={({ pressed }) => [
+              styles.manualSubmit,
+              pressed && styles.buttonPressed,
+            ]}
+            onPress={submitManualCode}
+            disabled={submitting}
+            accessibilityRole="button"
+          >
+            <Ionicons name="arrow-forward" size={18} color={colors.ink} />
+          </Pressable>
+        </View>
+      </View>
+    </View>
+  );
+}
+
 export function ArScreen({
   clue,
   tier,

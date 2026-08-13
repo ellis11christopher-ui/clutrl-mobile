@@ -1,19 +1,37 @@
--- Incremental migration for the ALREADY-DEPLOYED database: gives every
--- hunter their own randomized visiting order over a hunt's targets, instead
--- of everyone getting the same fixed hunt_items.position order. That fixed
--- order was letting hunters just follow whoever found the last target,
--- since everyone's "next clue" was always the same physical spot at the
--- same time.
+-- Incremental migration for the ALREADY-DEPLOYED database: introduces the
+-- five CLU/TRL game formats (sub-brands) as a real per-hunt setting, and
+-- gives each format its own target-ordering behavior:
 --
--- Safe to run against the live project as-is (schema.sql has already been
--- applied there) — this only adds a new table and replaces the view/function
--- bodies that schema.sql now also reflects for fresh installs. Run this once
--- in the Supabase SQL Editor.
+--   pista       - checkpoint/location clue trails. Fixed shared order
+--                 (hunt_items.position), same for every hunter.
+--   hare_hounds - live team pursuit. Each hunter gets their own randomized
+--                 order, so hunters can't just follow whoever finds the
+--                 next target first.
+--   quest       - story-driven adventures. Same fixed shared order as
+--                 pista; each item is framed as the hunt's next chapter.
+--   ar          - augmented-reality hunts. Randomized order like
+--                 hare_hounds; every published item must be an AR discovery.
+--   live        - festivals/conferences/community events: one venue, a
+--                 short window. Randomized order like hare_hounds, since
+--                 dense short-window crowds are exactly where
+--                 following-the-crowd is worst.
 --
--- IMPORTANT: any hunt with hunters already mid-hunt should be reset after
--- this runs (see reset_demo_hunt.sql) — their existing item_completions were
--- recorded against the old shared order and won't line up with a freshly
--- generated random order. New joins after this migration are unaffected.
+-- This supersedes the never-applied migrate_randomize_hunt_order.sql (that
+-- file has been deleted) — this script goes straight from the schema
+-- currently live in the project to the new dual-format schema in one run.
+-- Safe to run against the live project as-is; schema.sql is updated to
+-- match for future fresh installs.
+--
+-- Run this once in the Supabase SQL Editor. IMPORTANT: any hunt with
+-- hunters already mid-hunt should be reset after this runs (see
+-- reset_demo_hunt.sql) — their existing item_completions were recorded
+-- against the old shared order and won't line up with a freshly generated
+-- per-hunter order. New joins after this migration are unaffected.
+
+create type public.hunt_format as enum ('pista', 'hare_hounds', 'quest', 'ar', 'live');
+
+alter table public.hunts
+  add column format public.hunt_format not null default 'pista';
 
 create table if not exists public.membership_item_sequence (
   membership_id uuid not null references public.hunt_memberships(id) on delete cascade,
@@ -24,6 +42,49 @@ create table if not exists public.membership_item_sequence (
 );
 
 alter table public.membership_item_sequence enable row level security;
+
+-- NIGHT-OWL is the original checkpoint-trail demo hunt — make it Pista
+-- explicitly rather than relying on the column default.
+update public.hunts
+set format = 'pista'
+where id = '22222222-2222-2222-2222-222222222222';
+
+create or replace function public.assert_hunt_publishable(target_hunt_id uuid)
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_format public.hunt_format;
+  published_count integer;
+  non_ar_count integer;
+begin
+  select format into v_format
+  from public.hunts
+  where id = target_hunt_id;
+
+  select count(*)
+  into published_count
+  from public.hunt_items
+  where hunt_id = target_hunt_id and published = true;
+
+  if published_count < 10 then
+    raise exception 'A published hunt requires at least 10 active items';
+  end if;
+
+  if v_format = 'ar' then
+    select count(*)
+    into non_ar_count
+    from public.hunt_items
+    where hunt_id = target_hunt_id and published = true and kind <> 'ar';
+
+    if non_ar_count > 0 then
+      raise exception 'A CLU/TRL AR hunt requires every published item to be an AR discovery';
+    end if;
+  end if;
+end;
+$$;
 
 create or replace function public.join_hunt(
   p_join_code text,
@@ -62,10 +123,17 @@ begin
     select 1 from public.membership_item_sequence
     where membership_id = v_membership.id
   ) then
-    insert into public.membership_item_sequence (membership_id, item_id, sequence_position)
-    select v_membership.id, hi.id, row_number() over (order by random())
-    from public.hunt_items hi
-    where hi.hunt_id = v_hunt.id and hi.published = true;
+    if v_hunt.format in ('hare_hounds', 'ar', 'live') then
+      insert into public.membership_item_sequence (membership_id, item_id, sequence_position)
+      select v_membership.id, hi.id, row_number() over (order by random())
+      from public.hunt_items hi
+      where hi.hunt_id = v_hunt.id and hi.published = true;
+    else
+      insert into public.membership_item_sequence (membership_id, item_id, sequence_position)
+      select v_membership.id, hi.id, hi.position
+      from public.hunt_items hi
+      where hi.hunt_id = v_hunt.id and hi.published = true;
+    end if;
   end if;
 
   select count(*) into v_total_published
@@ -77,6 +145,7 @@ begin
     'hunt_id', v_hunt.id,
     'hunt_name', v_hunt.name,
     'tier', v_hunt.tier,
+    'format', v_hunt.format,
     'total_items', v_total_published,
     'completed_at', v_membership.completed_at
   );

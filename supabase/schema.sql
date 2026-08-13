@@ -12,6 +12,27 @@ create type public.hunt_status as enum ('draft', 'scheduled', 'live', 'paused', 
 create type public.clue_kind as enum ('text', 'photo', 'video', 'ar');
 create type public.member_role as enum ('hunter', 'master');
 
+-- The CLU/TRL sub-brand / game mode a hunt plays as. Orthogonal to hunt_tier
+-- (which gates platform features like GPS tracking and chat) — format
+-- decides the actual game mechanic. Note hunt_tier also has a 'live' label;
+-- that's an unrelated coincidence (tier 'live' = realtime features unlocked,
+-- format 'live' = the short single-venue event sub-brand), Postgres enum
+-- labels are scoped per type so there's no collision, but don't conflate them
+-- when reading query results.
+--   pista       - CLU/TRL Pista: checkpoint/location clue trails, fixed
+--                 shared order (hunt_items.position), same for every hunter.
+--   hare_hounds - CLU/TRL Hare & Hounds: live team pursuit, each hunter gets
+--                 their own randomized order so they can't just tail others.
+--   quest       - CLU/TRL Quest: story-driven adventures. Same fixed shared
+--                 order as pista; each item is framed as the next chapter.
+--   ar          - CLU/TRL AR: augmented-reality hunts. Randomized order like
+--                 hare_hounds; every published item must be kind = 'ar'.
+--   live        - CLU/TRL Live: festivals/conferences/community events, one
+--                 venue, a short window (starts_at/ends_at). Randomized order
+--                 like hare_hounds, since dense short-window crowds are
+--                 exactly where following-the-crowd is worst.
+create type public.hunt_format as enum ('pista', 'hare_hounds', 'quest', 'ar', 'live');
+
 create table public.profiles (
   id uuid primary key references auth.users(id) on delete cascade,
   display_name text not null check (char_length(display_name) between 1 and 80),
@@ -39,6 +60,7 @@ create table public.hunts (
   name text not null check (char_length(name) between 1 and 140),
   join_code text not null,
   tier public.hunt_tier not null default 'base',
+  format public.hunt_format not null default 'pista',
   status public.hunt_status not null default 'draft',
   starts_at timestamptz,
   ends_at timestamptz,
@@ -196,7 +218,10 @@ create table public.reward_redemptions (
   unique (reward_id, membership_id)
 );
 
--- Publishing invariant: at least 10 active/published items.
+-- Publishing invariants: at least 10 active/published items, and (for the
+-- CLU/TRL AR format) every one of those items must actually be an AR
+-- discovery — an AR-format hunt with a text/photo/video item in the mix
+-- would silently break the "entire treasure is in AR" promise.
 create or replace function public.assert_hunt_publishable(target_hunt_id uuid)
 returns void
 language plpgsql
@@ -204,8 +229,14 @@ security definer
 set search_path = ''
 as $$
 declare
+  v_format public.hunt_format;
   published_count integer;
+  non_ar_count integer;
 begin
+  select format into v_format
+  from public.hunts
+  where id = target_hunt_id;
+
   select count(*)
   into published_count
   from public.hunt_items
@@ -213,6 +244,17 @@ begin
 
   if published_count < 10 then
     raise exception 'A published hunt requires at least 10 active items';
+  end if;
+
+  if v_format = 'ar' then
+    select count(*)
+    into non_ar_count
+    from public.hunt_items
+    where hunt_id = target_hunt_id and published = true and kind <> 'ar';
+
+    if non_ar_count > 0 then
+      raise exception 'A CLU/TRL AR hunt requires every published item to be an AR discovery';
+    end if;
   end if;
 end;
 $$;
@@ -342,16 +384,26 @@ begin
     set team_name = coalesce(excluded.team_name, public.hunt_memberships.team_name)
   returning * into v_membership;
 
-  -- Only shuffle once per membership: re-joining (e.g. reopening the app)
+  -- Only generate once per membership: re-joining (e.g. reopening the app)
   -- must not reshuffle a hunter's remaining targets out from under them.
+  -- pista/quest keep the shared authoring order (hunt_items.position);
+  -- hare_hounds/ar/live each get their own random order, which is the whole
+  -- point of those formats — see the hunt_format comment above.
   if not exists (
     select 1 from public.membership_item_sequence
     where membership_id = v_membership.id
   ) then
-    insert into public.membership_item_sequence (membership_id, item_id, sequence_position)
-    select v_membership.id, hi.id, row_number() over (order by random())
-    from public.hunt_items hi
-    where hi.hunt_id = v_hunt.id and hi.published = true;
+    if v_hunt.format in ('hare_hounds', 'ar', 'live') then
+      insert into public.membership_item_sequence (membership_id, item_id, sequence_position)
+      select v_membership.id, hi.id, row_number() over (order by random())
+      from public.hunt_items hi
+      where hi.hunt_id = v_hunt.id and hi.published = true;
+    else
+      insert into public.membership_item_sequence (membership_id, item_id, sequence_position)
+      select v_membership.id, hi.id, hi.position
+      from public.hunt_items hi
+      where hi.hunt_id = v_hunt.id and hi.published = true;
+    end if;
   end if;
 
   select count(*) into v_total_published
@@ -363,6 +415,7 @@ begin
     'hunt_id', v_hunt.id,
     'hunt_name', v_hunt.name,
     'tier', v_hunt.tier,
+    'format', v_hunt.format,
     'total_items', v_total_published,
     'completed_at', v_membership.completed_at
   );

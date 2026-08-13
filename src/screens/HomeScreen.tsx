@@ -12,6 +12,7 @@ import {
 import {
   BottomNav,
   BrandLockup,
+  FormatBadge,
   Pill,
   PrimaryButton,
   ProgressBar,
@@ -20,18 +21,20 @@ import {
   commonStyles,
 } from '../components/ui';
 import { colors, radii, shadow } from '../theme';
-import type { Hunt, HuntTier, Screen } from '../types';
+import type { Hunt, HuntFormat, HuntTier, Screen } from '../types';
 
 export function HomeScreen({
   featuredHunt,
   activeHuntName,
   activeHuntSubtitle,
   tier,
+  format,
   joined,
   progress,
   total,
   joinCodeDefault,
   onJoin,
+  onScanToJoin,
   onContinue,
   onNavigate,
 }: {
@@ -39,11 +42,13 @@ export function HomeScreen({
   activeHuntName: string;
   activeHuntSubtitle?: string;
   tier: HuntTier;
+  format?: HuntFormat;
   joined: boolean;
   progress: number;
   total: number;
   joinCodeDefault: string;
   onJoin: (code: string) => Promise<void>;
+  onScanToJoin: () => void;
   onContinue: () => void;
   onNavigate: (screen: Screen) => void;
 }) {
@@ -100,6 +105,7 @@ export function HomeScreen({
             progress={progress}
             total={total}
             tier={tier}
+            format={format}
             onContinue={onContinue}
             onTracking={() => onNavigate('tracking')}
           />
@@ -108,6 +114,7 @@ export function HomeScreen({
             value={joinCode}
             onChange={setJoinCode}
             onSubmit={submitCode}
+            onScanToJoin={onScanToJoin}
             joining={joining}
             error={joinError}
           />
@@ -139,12 +146,14 @@ function JoinCard({
   value,
   onChange,
   onSubmit,
+  onScanToJoin,
   joining,
   error,
 }: {
   value: string;
   onChange: (text: string) => void;
   onSubmit: () => void;
+  onScanToJoin: () => void;
   joining: boolean;
   error: string | null;
 }) {
@@ -155,7 +164,7 @@ function JoinCard({
       </View>
       <View style={styles.joinCopy}>
         <Text style={styles.joinTitle}>Have a hunt code?</Text>
-        <Text style={styles.joinBody}>Enter it to meet your first clue.</Text>
+        <Text style={styles.joinBody}>Enter it, or scan the hunt's join QR.</Text>
       </View>
       <View style={styles.codeRow}>
         <TextInput
@@ -182,6 +191,14 @@ function JoinCard({
             <Ionicons name="arrow-forward" size={21} color={colors.ink} />
           )}
         </Pressable>
+        <Pressable
+          style={({ pressed }) => [styles.scanJoinButton, pressed && styles.pressed]}
+          onPress={onScanToJoin}
+          disabled={joining}
+          accessibilityRole="button"
+        >
+          <Ionicons name="qr-code-outline" size={21} color={colors.ink} />
+        </Pressable>
       </View>
       {error ? <Text style={styles.joinError}>{error}</Text> : null}
     </View>
@@ -194,6 +211,7 @@ function ActiveHuntCard({
   progress,
   total,
   tier,
+  format,
   onContinue,
   onTracking,
 }: {
@@ -202,6 +220,7 @@ function ActiveHuntCard({
   progress: number;
   total: number;
   tier: HuntTier;
+  format?: HuntFormat;
   onContinue: () => void;
   onTracking: () => void;
 }) {
@@ -211,7 +230,10 @@ function ActiveHuntCard({
         <Pill tone="lime" icon="radio-button-on">
           HUNT IN PROGRESS
         </Pill>
-        <TierBadge tier={tier} />
+        <View style={styles.activeBadges}>
+          {format ? <FormatBadge format={format} /> : null}
+          <TierBadge tier={tier} />
+        </View>
       </View>
       <Text style={styles.activeTitle}>{huntName}</Text>
       {subtitle ? <Text style={styles.activeLocation}>{subtitle}</Text> : null}
@@ -429,6 +451,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  scanJoinButton: {
+    width: 54,
+    height: 54,
+    borderRadius: 16,
+    backgroundColor: colors.paper,
+    borderWidth: 1,
+    borderColor: colors.line,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   pressed: {
     opacity: 0.7,
   },
@@ -449,6 +481,11 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 22,
+  },
+  activeBadges: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
   },
   activeTitle: {
     color: colors.white,

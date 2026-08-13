@@ -1,6 +1,14 @@
 export type HuntTier = 'base' | 'live' | 'immersive';
 export type AppRole = 'hunter' | 'master';
 export type ClueKind = 'text' | 'photo' | 'video' | 'ar';
+
+// The CLU/TRL game format (sub-brand) a hunt plays as. Orthogonal to
+// HuntTier (which gates platform features like GPS tracking/chat) — format
+// is the actual game mechanic. Note HuntTier also has a 'live' value; that's
+// an unrelated coincidence (tier 'live' = realtime features unlocked,
+// format 'live' = the short single-venue event sub-brand) — don't conflate
+// them.
+export type HuntFormat = 'pista' | 'hare_hounds' | 'quest' | 'ar' | 'live';
 export type Screen =
   | 'auth'
   | 'home'
@@ -10,6 +18,7 @@ export type Screen =
   | 'finale'
   | 'clue'
   | 'scanner'
+  | 'joinScan'
   | 'reward'
   | 'tracking'
   | 'chat'

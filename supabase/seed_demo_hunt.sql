@@ -33,16 +33,16 @@ begin
   on conflict (organization_id, profile_id) do nothing;
 
   insert into public.hunts (
-    id, organization_id, name, join_code, tier, status,
+    id, organization_id, name, join_code, tier, format, status,
     reward_title, reward_copy, reward_terms
   )
   values (
-    v_hunt_id, v_org_id, 'Neon After Dark', 'NIGHT-OWL', 'immersive', 'live',
+    v_hunt_id, v_org_id, 'Neon After Dark', 'NIGHT-OWL', 'immersive', 'pista', 'live',
     'You lit up the night.',
     'Show this screen at the finish tent for two VIP passes to tonight''s rooftop mixer.',
     'Valid tonight only. Single use.'
   )
-  on conflict (id) do update set status = 'live';
+  on conflict (id) do update set status = 'live', format = 'pista';
 end $$;
 
 insert into public.hunt_items (

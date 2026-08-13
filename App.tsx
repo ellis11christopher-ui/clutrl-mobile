@@ -20,7 +20,14 @@ import {
 } from './src/lib/hunts';
 import { AuthScreen } from './src/screens/AuthScreen';
 import { colors } from './src/theme';
-import type { ChatMessage, Clue, ClueKind, HuntTier, Screen } from './src/types';
+import type {
+  ChatMessage,
+  Clue,
+  ClueKind,
+  HuntFormat,
+  HuntTier,
+  Screen,
+} from './src/types';
 import { HomeScreen } from './src/screens/HomeScreen';
 import {
   AdScreen,
@@ -29,6 +36,7 @@ import {
   ClueScreen,
   CountdownScreen,
   FinaleScreen,
+  JoinScannerScreen,
   RewardScreen,
   ScannerScreen,
 } from './src/screens/HuntScreens';
@@ -53,13 +61,15 @@ function clueEyebrow(kind: ClueKind): string {
 }
 
 // Converts a row from the my_current_items view (see supabase/schema.sql)
-// into the same Clue shape the offline demo screens already render.
-function remoteItemToClue(item: RemoteHuntItem): Clue {
+// into the same Clue shape the offline demo screens already render. In
+// CLU/TRL Quest, each item is the hunt's next story chapter rather than a
+// generic clue, so the eyebrow reads "Chapter N" instead of the kind label.
+function remoteItemToClue(item: RemoteHuntItem, format?: HuntFormat): Clue {
   return {
     id: item.id,
     order: item.position,
     title: item.title,
-    eyebrow: clueEyebrow(item.kind),
+    eyebrow: format === 'quest' ? `Chapter ${item.position}` : clueEyebrow(item.kind),
     clue: item.clue_text,
     hint: item.hint_text ?? 'Ask your Hunt Master for a nudge.',
     kind: item.kind,
@@ -107,7 +117,9 @@ function AppShell() {
 
   const localClue = demoHunt.clues[currentIndex] ?? demoHunt.clues[0]!;
   const remoteCurrentItem = remoteItems.find((item) => !item.completed) ?? null;
-  const remoteClue = remoteCurrentItem ? remoteItemToClue(remoteCurrentItem) : null;
+  const remoteClue = remoteCurrentItem
+    ? remoteItemToClue(remoteCurrentItem, remoteMembership?.format)
+    : null;
   const clue: Clue | null = remoteMode ? remoteClue : localClue;
 
   const total = remoteMode ? (remoteMembership?.total_items ?? 0) : demoHunt.clues.length;
@@ -277,6 +289,7 @@ function AppShell() {
 
   const inverse =
     screen === 'scanner' ||
+    screen === 'joinScan' ||
     screen === 'ar' ||
     screen === 'celebration' ||
     screen === 'countdown' ||
@@ -314,13 +327,22 @@ function AppShell() {
               remoteMode ? undefined : `${demoHunt.venue} · ${demoHunt.city}`
             }
             tier={tier}
+            format={remoteMode ? remoteMembership?.format : undefined}
             joined={joined}
             progress={completedCount}
             total={total}
             joinCodeDefault={remoteMode ? '' : demoHunt.joinCode}
             onJoin={startHunt}
+            onScanToJoin={() => setScreen('joinScan')}
             onContinue={continueHunt}
             onNavigate={setScreen}
+          />
+        ) : null}
+
+        {screen === 'joinScan' ? (
+          <JoinScannerScreen
+            onBack={() => setScreen('home')}
+            onScan={startHunt}
           />
         ) : null}
 

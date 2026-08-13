@@ -11,7 +11,7 @@ import {
   type ViewStyle,
 } from 'react-native';
 import { colors, radii, shadow } from '../theme';
-import type { HuntTier, Screen } from '../types';
+import type { HuntFormat, HuntTier, Screen } from '../types';
 
 type IconName = ComponentProps<typeof Ionicons>['name'];
 
@@ -166,6 +166,23 @@ export function TierBadge({ tier }: { tier: HuntTier }) {
   return (
     <Pill tone={tier === 'immersive' ? 'cyan' : tier === 'live' ? 'lime' : 'light'} icon={icon}>
       {label}
+    </Pill>
+  );
+}
+
+const formatMeta: Record<HuntFormat, { label: string; icon: IconName }> = {
+  pista: { label: 'PISTA', icon: 'trail-sign-outline' },
+  hare_hounds: { label: 'HARE & HOUNDS', icon: 'shuffle' },
+  quest: { label: 'QUEST', icon: 'book-outline' },
+  ar: { label: 'AR', icon: 'cube-outline' },
+  live: { label: 'LIVE', icon: 'flash' },
+};
+
+export function FormatBadge({ format }: { format: HuntFormat }) {
+  const meta = formatMeta[format];
+  return (
+    <Pill tone={format === 'hare_hounds' || format === 'live' ? 'coral' : 'cyan'} icon={meta.icon}>
+      {meta.label}
     </Pill>
   );
 }

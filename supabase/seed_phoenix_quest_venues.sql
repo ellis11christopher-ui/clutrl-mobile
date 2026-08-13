@@ -30,6 +30,22 @@
 -- through the reservation system (lights appear as a per-field paid add-on
 -- when booking) or directly with Parks and Recreation, then promote.
 --
+-- PHOENIX LIGHTING IS RESERVATION-GATED
+-- ---------------------------------------------------------------------------
+-- The $5/hour light fee is itself the finding that matters: where Phoenix
+-- fields have lights, those lights are energized for a paid booking, not
+-- left on for whoever shows up. Under the venue policy that makes every one
+-- of these reservation-gated, so each row sets
+-- lighting_requires_reservation = true and carries an evening cutoff.
+--
+-- The 17:00 cutoff below is a deliberately conservative placeholder, chosen
+-- because Phoenix's earliest sunset is roughly 5:20 p.m. in December, so
+-- 5 p.m. is the only fixed local time that is safe year-round. In June that
+-- is over two hours before dark and needlessly strict. A sunset-relative
+-- rule (playable until, say, 30 minutes before local sunset) would be the
+-- better long-term design and is not built yet — treat this number as a
+-- product decision still open, not a researched value.
+--
 -- COORDINATES ARE APPROXIMATE — CONFIRM BEFORE PROMOTING
 -- ---------------------------------------------------------------------------
 -- Latitude/longitude below are derived from each street address against the
@@ -60,6 +76,9 @@ insert into public.quest_venues (
   longitude,
   play_radius_meters,
   lighting,
+  lighting_requires_reservation,
+  playable_until_local,
+  time_zone,
   verification_status,
   verification_note,
   submitted_by
@@ -75,6 +94,9 @@ values
     -112.2170,
     150,
     'unknown',
+    true,
+    '17:00',
+    'America/Phoenix',
     'pending',
     '6602 W Encanto Blvd. City-listed amenities include Soccer Field, Ball Field, Basketball Court, Playground, Restrooms, Urban Fishing. LIGHTING NOT STATED per-venue by the city; confirm via reservation system or Parks and Rec before promoting. COORDINATES APPROXIMATE (grid-derived from address) — confirm on a map.',
     'agent'
@@ -89,6 +111,9 @@ values
     -112.1065,
     150,
     'unknown',
+    true,
+    '17:00',
+    'America/Phoenix',
     'pending',
     '2121 N 15th Ave. City-listed amenities include Soccer Field, Ball Field, Basketball Court, Playground, Restrooms, ADA Accessible, Urban Fishing. LIGHTING NOT STATED per-venue by the city; confirm before promoting. COORDINATES APPROXIMATE (grid-derived from address) — confirm on a map.',
     'agent'
@@ -103,6 +128,9 @@ values
     -112.0215,
     150,
     'unknown',
+    true,
+    '17:00',
+    'America/Phoenix',
     'pending',
     '2425 E Deer Valley Rd. City-listed amenities include Soccer Field, Ball Field, Playground, Restrooms, Shade Structures. LIGHTING NOT STATED per-venue by the city; confirm before promoting. COORDINATES APPROXIMATE (grid-derived from address) — confirm on a map.',
     'agent'
@@ -117,6 +145,9 @@ values
     -112.1282,
     150,
     'unknown',
+    true,
+    '17:00',
+    'America/Phoenix',
     'pending',
     '9833 N 25th Ave. City-listed amenities include Soccer Field, Ball Field, Basketball Court, Pickleball, Tennis, Playground, Restrooms. Facility page lists hours only as "Please contact facility directly" (602-261-8011). LIGHTING NOT STATED per-venue by the city; confirm before promoting. COORDINATES APPROXIMATE (grid-derived from address) — confirm on a map.',
     'agent'

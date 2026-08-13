@@ -21,15 +21,26 @@ export type QuestVenue = {
   longitude: number;
   play_radius_meters: number;
   lighting: LightingStatus;
+  // True when the venue's lights only come on for a paid booking, so it
+  // cannot be relied on to be lit for a walk-up player. Such venues always
+  // carry a playable_until_local cutoff, past which the server stops
+  // returning them at all.
+  lighting_requires_reservation: boolean;
+  playable_until_local: string | null;
+  time_zone: string;
   verifying_authority: string | null;
   distance_meters: number;
 };
 
 /**
- * Verified venues near a coordinate, nearest first. Returns an empty list
- * where the registry has no coverage yet — that is a normal state, not an
- * error, and the caller should tell the player Quest isn't available in
- * their area rather than falling back to an unvetted location.
+ * Verified venues near a coordinate, nearest first.
+ *
+ * The server also filters by each venue's own local playable window, so a
+ * reservation-lit field simply stops appearing after its evening cutoff.
+ * That means an empty list is a normal state with two distinct causes — no
+ * registry coverage in this area, or everything nearby is closed for the
+ * evening — and in neither case should the caller fall back to an unvetted
+ * location.
  */
 export async function findVenuesNear(
   latitude: number,

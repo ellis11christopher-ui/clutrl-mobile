@@ -23,6 +23,19 @@
 --   Only 'lit' and 'partially_lit' should ever be promoted to verified, and
 --   'partially_lit' venues should carry a verification_note describing which
 --   part of the site is lit.
+--
+-- RESERVATION-GATED LIGHTING
+--   Set lighting_requires_reservation = true wherever the lights only come
+--   on for a paid or booked reservation. "Has lights" is not "will be lit":
+--   a walk-up player at 8 p.m. on an unbooked night finds a dark field. Any
+--   such venue — and any venue with lighting = 'unlit' — must also carry a
+--   playable_until_local cutoff, and the schema will reject it otherwise.
+--   find_quest_venues_near stops offering the venue past that local time.
+--
+-- time_zone
+--   IANA name (e.g. 'America/Phoenix', 'America/New_York'). Required, with
+--   no default on purpose: the cutoff is evaluated in this zone, so an
+--   inherited wrong value would be hours off.
 
 -- ---------------------------------------------------------------------------
 -- STEP 1 — add the candidate (safe: lands as 'pending', app cannot see it)
@@ -37,6 +50,9 @@ insert into public.quest_venues (
   latitude,
   longitude,
   play_radius_meters,
+  lighting_requires_reservation,
+  playable_until_local,
+  time_zone,
   submitted_by
 )
 values (
@@ -48,6 +64,9 @@ values (
   <<LATITUDE>>,
   <<LONGITUDE>>,
   150,          -- playable radius in meters; keep inside the actual grounds
+  <<true if lights need a booking, else false>>,
+  '<<HH:MM evening cutoff, or NULL only if lights are always on>>',
+  '<<IANA zone, e.g. America/Phoenix>>',
   '<<agent | human>>'
 );
 

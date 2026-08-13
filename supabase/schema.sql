@@ -112,6 +112,25 @@ create table public.quest_venues (
     check (play_radius_meters between 20 and 2000),
 
   lighting public.lighting_status not null default 'unknown',
+
+  -- "Has lights" and "will be lit" are different claims. Many municipal
+  -- fields only energize lights for a paid reservation (Phoenix charges a
+  -- $5/hour light fee), so a walk-up player at 8 p.m. on an unbooked night
+  -- finds a dark field. Reservation-gated lighting is therefore tracked
+  -- separately from whether lighting exists at all.
+  lighting_requires_reservation boolean not null default false,
+
+  -- Playable window in the venue's own local time, enforced by
+  -- find_quest_venues_near. Either bound may be null for a venue that is
+  -- genuinely fine around the clock.
+  playable_from_local time,
+  playable_until_local time,
+
+  -- IANA zone name, used to evaluate the cutoff against local wall-clock
+  -- time. Deliberately has no default: a venue silently inheriting the wrong
+  -- timezone would compute its cutoff hours off.
+  time_zone text not null,
+
   verification_status public.venue_verification_status not null default 'pending',
   verifying_authority text,
   verification_source_url text,
@@ -131,6 +150,14 @@ create table public.quest_venues (
       and verified_at is not null
       and lighting <> 'unknown'
     )
+  ),
+
+  -- A venue that cannot be counted on to be lit must say when it stops being
+  -- playable. Covers both reservation-gated lighting and venues with no
+  -- lighting at all; dusk-to-close municipal lighting can leave this null.
+  constraint quest_venues_dark_venues_require_cutoff check (
+    (lighting_requires_reservation = false and lighting <> 'unlit')
+    or playable_until_local is not null
   )
 );
 
@@ -666,6 +693,9 @@ returns table (
   longitude double precision,
   play_radius_meters integer,
   lighting public.lighting_status,
+  lighting_requires_reservation boolean,
+  playable_until_local time,
+  time_zone text,
   verifying_authority text,
   distance_meters double precision
 )
@@ -684,11 +714,24 @@ as $$
     v.longitude,
     v.play_radius_meters,
     v.lighting,
+    v.lighting_requires_reservation,
+    v.playable_until_local,
+    v.time_zone,
     v.verifying_authority,
     public.haversine_meters(p_latitude, p_longitude, v.latitude, v.longitude)
   from public.quest_venues v
   where v.active = true
     and v.verification_status = 'verified'
+    -- Outside its playable window, a venue is simply not offered. Evaluated
+    -- in the venue's own timezone, not the server's or the player's.
+    and (
+      v.playable_from_local is null
+      or (now() at time zone v.time_zone)::time >= v.playable_from_local
+    )
+    and (
+      v.playable_until_local is null
+      or (now() at time zone v.time_zone)::time < v.playable_until_local
+    )
     and v.latitude
       between p_latitude - (p_radius_meters / 111320.0)
           and p_latitude + (p_radius_meters / 111320.0)

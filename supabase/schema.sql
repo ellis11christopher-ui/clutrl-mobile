@@ -95,6 +95,24 @@ create table public.hunt_memberships (
   unique (hunt_id, profile_id)
 );
 
+-- Each hunter gets their own shuffled visiting order over the same set of
+-- targets, generated once at join time (see join_hunt). This is what stops
+-- hunters from just following each other to the same next target — everyone
+-- still finds all of them, just not in the same order or at the same time.
+create table public.membership_item_sequence (
+  membership_id uuid not null references public.hunt_memberships(id) on delete cascade,
+  item_id uuid not null references public.hunt_items(id) on delete cascade,
+  sequence_position integer not null check (sequence_position > 0),
+  primary key (membership_id, item_id),
+  unique (membership_id, sequence_position)
+);
+
+alter table public.membership_item_sequence enable row level security;
+
+-- No client-facing policies, by design: only join_hunt/submit_scan and the
+-- my_current_items view (all SECURITY DEFINER / bypass RLS) touch this table,
+-- same pattern as hunt_items and item_completions above.
+
 create table public.item_completions (
   id uuid primary key default gen_random_uuid(),
   membership_id uuid not null references public.hunt_memberships(id) on delete cascade,
@@ -324,6 +342,18 @@ begin
     set team_name = coalesce(excluded.team_name, public.hunt_memberships.team_name)
   returning * into v_membership;
 
+  -- Only shuffle once per membership: re-joining (e.g. reopening the app)
+  -- must not reshuffle a hunter's remaining targets out from under them.
+  if not exists (
+    select 1 from public.membership_item_sequence
+    where membership_id = v_membership.id
+  ) then
+    insert into public.membership_item_sequence (membership_id, item_id, sequence_position)
+    select v_membership.id, hi.id, row_number() over (order by random())
+    from public.hunt_items hi
+    where hi.hunt_id = v_hunt.id and hi.published = true;
+  end if;
+
   select count(*) into v_total_published
   from public.hunt_items
   where hunt_id = v_hunt.id and published = true;
@@ -345,12 +375,17 @@ grant execute on function public.join_hunt(text, text) to authenticated;
 -- has joined. Future clues stay invisible until their predecessor is
 -- confirmed, so the app cannot be used to browse ahead. qr_token_hash is
 -- deliberately not selected here.
+--
+-- "position" here is the hunter's own shuffled sequence_position (see
+-- membership_item_sequence), not hunt_items.position — each hunter is
+-- revealed targets in their own randomized order, not hunt_items' shared
+-- authoring order, so hunters can't just follow each other to the next spot.
 create view public.my_current_items as
 select
   hi.id,
   hi.hunt_id,
   hm.id as membership_id,
-  hi.position,
+  mis.sequence_position as position,
   hi.title,
   hi.clue_text,
   hi.hint_text,
@@ -366,12 +401,14 @@ select
   (ic.id is not null) as completed,
   ic.completed_at
 from public.hunt_memberships hm
+join public.membership_item_sequence mis
+  on mis.membership_id = hm.id
 join public.hunt_items hi
-  on hi.hunt_id = hm.hunt_id and hi.published = true
+  on hi.id = mis.item_id and hi.published = true
 left join public.item_completions ic
   on ic.membership_id = hm.id and ic.item_id = hi.id
 where hm.profile_id = auth.uid()
-  and hi.position <= (
+  and mis.sequence_position <= (
     select count(*) + 1
     from public.item_completions ic2
     where ic2.membership_id = hm.id
@@ -433,11 +470,12 @@ begin
 
   v_next_position := v_completed_count + 1;
 
-  select * into v_item
-  from public.hunt_items
-  where hunt_id = v_membership.hunt_id
-    and published = true
-    and position = v_next_position;
+  select hi.* into v_item
+  from public.membership_item_sequence mis
+  join public.hunt_items hi
+    on hi.id = mis.item_id and hi.published = true
+  where mis.membership_id = p_membership_id
+    and mis.sequence_position = v_next_position;
 
   if not found then
     raise exception 'This hunt has no further discoveries to confirm';
@@ -476,7 +514,7 @@ begin
   v_result := jsonb_build_object(
     'newly_completed', not v_already_completed,
     'item_id', v_item.id,
-    'position', v_item.position,
+    'position', v_next_position,
     'completed_count', v_completed_count,
     'total_items', v_total_published,
     'hunt_complete', v_hunt_complete

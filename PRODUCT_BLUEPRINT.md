@@ -118,6 +118,10 @@ Business rules:
    configures otherwise.
 6. Location sharing begins only after consent and only while an eligible hunt
    session is active.
+7. Each hunter is assigned their own randomized visiting order over a hunt's
+   targets at join time, not the shared authoring order — so hunters can't
+   just tail whoever finds the next target first. Every hunter still finds
+   every target; only the order differs per hunter.
 
 ## 4. Experience design
 
@@ -368,7 +372,9 @@ operations. Native AR expertise becomes necessary in Phase 3.
    or consumers?
 2. Public marketplace of hunts or private invite-only events first?
 3. Direct sponsor sales only, or programmatic ads too?
-4. Must hunt order be fixed, flexible, team-synchronized, or configurable?
+4. ~~Must hunt order be fixed, flexible, team-synchronized, or configurable?~~
+   Decided: per-hunter randomized (business rule 7, section 3) — not
+   configurable yet.
 5. Are rewards issued by the platform or entirely by organizers?
 6. Are minors allowed?
 7. Is background location genuinely required?
